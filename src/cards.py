@@ -7,6 +7,7 @@ Purpose:    define deck, hand, and card classes
 '''
 
 from functools import total_ordering
+from random import shuffle
 
 @total_ordering
 class Card(): 
@@ -64,82 +65,154 @@ class CardStack():
 
     Attributes
     ----------
-    size
+    stack : list
+        List of cards in deck
+    size : int
+        Number of cards in deck, starts at 0
+    
+    Methods
+    -------
+    __init__(self)
+        Initialize an empty stack of cards
+    pop(self, i=-1)
+        Pop off ith Card from top of stack
+    peek(self)
+        Look at Card at top of stack
+    append(self, card)
+        Add Card to top of stack
+    prepend(self, card)
+        Add Card to front of stack
+    
+    """
+
+    def __init__(self):
+        """Initialize an empty stack of cards"""
+
+        self.stack = []
+        self.size = 0
+
+    def pop(self, i=-1):
+        """Pop off ith Card from top of stack
+        
+        Parameters
+        ----------
+        i : int, optional
+            Index of element to pop (the default is -1, which is it the last element)
+        
+        Returns
+        -------
+        Card
+            Card that is popped off stack
+        """
+
+        return self.stack.pop(i)        
+
+    def peek(self):
+        """Look at Card at top of stack
+        
+        Returns
+        -------
+        Card
+            Card at top of stack
+        """
+
+        return self.stack[-1]
+
+    def append(self, card):
+        """Add Card to top of stack
+        
+        Parameters
+        ----------
+        card : Card
+            Card to add to top of stack
+        
+        """
+
+        self.stack.append(card)
+    
+    def prepend(self, card):
+        """Add Card to front of stack
+        
+        Parameters
+        ----------
+        card : Card
+            Card to add to front of stack
+        
+        """
+
+        self.stack.insert(0, card)
+    
+
+class Deck(CardStack):
+    """A whole deck of cards
+
+    Attributes
+    ----------
+    stack : list
+        List of cards in deck
+    size: int
         Number of cards in deck
     
     Methods
     -------
     __init__(self, size)
-        Initialize a stack of cards of certain size
-    pop(self, i=-1)
-        Pop off ith Card from top of stack
-    peek(self)
-        Look at Card at top of stack
-    append(self, Card)
-        Add Card to top of stack
-    prepend(self, Card)
-        Add Card to front of stack
-    remove(self, Card)
-        Remove Card from stack
-    
+        Initialize a stack of 52 cards
+    shuffle(self)
+        Shuffle the deck
+    to_hand(self, hand, num)
+        Move top [num] Cards from deck to Hand
+
     """
 
-    def __init__(self, size):
-        """Initialize a stack of cards of certain size
+    def __init__(self):
+        """Initialize a stack of the 52 cards of a standard deck"""
+
+        super().__init__(self)
+        self.size = 52
+
+        for suit in range(4):
+            for rank in range(1, 14):
+                card = Card(suit, rank)
+                self.stack.append(card)
+    
+    def shuffle(self):
+        """Shuffle deck"""
+        shuffle(self.stack)
+    
+    def deck_to_hand(self, hand, num):
+        """Move top [num] Cards from deck to Hand
         
         Parameters
         ----------
-        size : int
-            Size of stack of cards
-        
+        hand : Hand
+            Hand to add cards to
+        num : int
+            Number of cards to move to Hand
+
         """
-        self.stack = []
-        self.size = size
 
-    def pop(self, i=-1):
-                
-        """Pop off ith Card from top of stack"""
+        self.stack.pop()
 
-    def peek(self):
-        """Look at Card at top of stack"""
-
-    def append(Card):
-        """Add Card to top of stack"""
     
-    def prepend(Card):
-        """Add Card to front of stack"""
-    
-    def remove(Card):
-        """Remove Card from stack"""
-    
-
-class Deck(CardStack):
-    """A whole deck of cards
-    
-    Implement stack data structure.
+class Hand(CardStack):
+    """A player's hand
 
     Attributes
     ----------
-    size
-        number of cards in deck
+    stack : list
+        List of cards in hand
+    size: int
+        Number of cards in hand
     
     Methods
     -------
     __init__(self, size)
-        Initialize a stack of 52 cards
+        Initialize an empty hand
 
-    remove(Card)
-        Remove Card from deck
-    shuffle()
-        Shuffle the deck
-    to_hand()
-        Sort the deck in ascending order
     """
 
     def __init__(self):
-        super().__init__(self, 52)
+        """Initialize an empty hand"""
 
+        super().__init__(self)
     
-class Hand():
-    """The hand that the player is holding
-    """
