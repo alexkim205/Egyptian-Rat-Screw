@@ -23,6 +23,10 @@ class Player:
     -------
     __init__(self, id='')
         Initialize player object
+    __repr__(self)
+        Representational string
+    __str__(self)
+        Stringify
     spit(self, deck)
         The player moves top card from hand to top of main deck
     burn(self, deck)
@@ -36,6 +40,18 @@ class Player:
         """Initialize player object"""
         
         self.hand = Hand()
+
+    def __repr__(self):
+        """Representational string representation"""
+        return "%s [%s]" % (self.__class__.__name__, ", ".join(repr(c) for c in self.stack))
+    
+    def __str__(self):
+        """Stringify"""
+        s = "{} of {} cards\n".format(self.__class__.__name__, self.size)
+        for c in self.stack:
+            s += "  " + str(c) + "\n"
+
+        return s
 
     def spit(self, deck):
         """The player moves top card from hand to top of main deck
@@ -133,8 +149,13 @@ class Player:
 
 class Computer(Player):
 
+    # 1 (beginner CPU) - 5 (hard CPU)
+    seeds = range(5)
+
     def __init__(self, id=''):
         """Initialize player object"""
         
         self.hand = Hand()
         self.seed = 0
+    
+    
