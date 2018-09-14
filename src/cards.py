@@ -2,7 +2,7 @@
 Author:     Alex Kim
 Project:    Egyptian Rat Screw(ERS), Slap Game
 File:       src/cards.py
-Purpose:    define deck, hand, and card classes
+Purpose:    define Card, Deck, Hand classes
 
 '''
 
@@ -179,8 +179,8 @@ class Deck(CardStack):
         """Shuffle deck"""
         shuffle(self.stack)
     
-    def deck_to_hand(self, hand, num):
-        """Move top [num] Cards from deck to Hand
+    def to_hand(self, hand, num):
+        """Move top `num` Cards from deck to Hand
         
         Parameters
         ----------
@@ -191,7 +191,8 @@ class Deck(CardStack):
 
         """
 
-        self.stack.pop()
+        for i in range(num):
+            hand.append(self.stack.pop())
 
     
 class Hand(CardStack):
