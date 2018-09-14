@@ -38,7 +38,7 @@ class Card():
         Stringify
     """
 
-    suits = ["Diamonds", "Clubs", "Hearts", "Spades"]
+    suits = ['♦', '♣', '♥', '♠']
     ranks = [None, "A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"]
 
     def __init__(self, suit = 0, rank = 0):
@@ -60,11 +60,11 @@ class Card():
 
     def __repr__(self):
         """Representational string representation"""
-        return "Card (%s %s)" % (self.suit, self.rank)
+        return "%s(%s %s)" % (self.__class__.__name__, self.suit, self.rank)
     
     def __str__(self):
         """Stringify"""
-        return "<%s of %s>" % (suits[self.suit], ranks[self.rank])
+        return "%s of %s" % (self.suits[self.suit], self.ranks[self.rank])
 
 class CardStack():
     """A stack of cards. 
@@ -105,14 +105,14 @@ class CardStack():
     
     def __repr__(self):
         """Representational string representation"""
-        return "CardStack [%s]" % ", ".join(repr(c) for c in self.stack)
+        return "%s [%s]" % (self.__class__.__name__, ", ".join(repr(c) for c in self.stack))
     
     def __str__(self):
         """Stringify"""
-        s = "<CardStack\n"
+        s = "{} of {} cards\n".format(self.__class__.__name__, self.size)
         for c in self.stack:
-            s += "\t" + str(c) + "\n"
-        s += ">"
+            s += "  " + str(c) + "\n"
+
         return s
 
     def pop(self, i=-1):
@@ -129,6 +129,7 @@ class CardStack():
             Card that is popped off stack
         """
 
+        self.size -= 1
         return self.stack.pop(i)        
 
     def peek(self):
@@ -153,6 +154,7 @@ class CardStack():
         """
 
         self.stack.append(card)
+        self.size += 1
     
     def prepend(self, card):
         """Add Card to front of stack
@@ -165,6 +167,7 @@ class CardStack():
         """
 
         self.stack.insert(0, card)
+        self.size += 1
     
 
 class Deck(CardStack):
@@ -193,7 +196,7 @@ class Deck(CardStack):
     def __init__(self):
         """Initialize a stack of the 52 cards of a standard deck"""
 
-        super().__init__(self)
+        super().__init__()
         self.size = 52
 
         for suit in range(4):
@@ -243,7 +246,7 @@ class Hand(CardStack):
     def __init__(self):
         """Initialize an empty hand"""
 
-        super().__init__(self)
+        super().__init__()
     
     def to_deck(self, deck, num, toTop=True):
         """Move top `num` Cards from Hand to top/bottom of Deck
@@ -266,5 +269,3 @@ class Hand(CardStack):
         else:
             for i in range(num):
                 deck.prepend(self.stack.pop())
-
-        
