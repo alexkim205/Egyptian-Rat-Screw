@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 '''
 Author:     Alex Kim
 Project:    Egyptian Rat Screw(ERS), Slap Game
@@ -31,11 +33,13 @@ class Card():
     __lt__(self, other)
         Checks < equality of self to other Card
     __repr__(self)
-        String representation
+        Representational string
+    __str__(self)
+        Stringify
     """
 
     suits = ["Diamonds", "Clubs", "Hearts", "Spades"]
-    ranks = [None, "A", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"]
+    ranks = [None, "A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"]
 
     def __init__(self, suit = 0, rank = 0):
         """Initialize Card with suit and rank; defaults to Diamonds 'None'"""
@@ -55,8 +59,12 @@ class Card():
         return ((self.suit, self.rank) < (other.suit, other.rank))
 
     def __repr__(self):
-        """String representation"""
+        """Representational string representation"""
         return "Card (%s %s)" % (self.suit, self.rank)
+    
+    def __str__(self):
+        """String representation"""
+        return "<%s of %s>" % (suits[self.suit], ranks[self.rank])
 
 class CardStack():
     """A stack of cards. 
@@ -144,7 +152,7 @@ class CardStack():
     
 
 class Deck(CardStack):
-    """A whole deck of cards
+    """A whole deck of cards, cards will be face up
 
     Attributes
     ----------
@@ -196,7 +204,7 @@ class Deck(CardStack):
 
     
 class Hand(CardStack):
-    """A player's hand
+    """A player's hand, cards will be face down
 
     Attributes
     ----------
@@ -209,6 +217,8 @@ class Hand(CardStack):
     -------
     __init__(self, size)
         Initialize an empty hand
+    to_deck(self, size)
+        Move top `num` Cards from Hand to top/bottom of Deck
 
     """
 
@@ -217,3 +227,27 @@ class Hand(CardStack):
 
         super().__init__(self)
     
+    def to_deck(self, deck, num, toTop=True):
+        """Move top `num` Cards from Hand to top/bottom of Deck
+        
+        Parameters
+        ----------
+        deck : Deck
+            Deck to add cards to
+        num : int
+            Number of cards to move to Deck
+        toTop : bool, optional
+            Indicates if card from hand should be added to top or 
+            bottom of Deck (the default is True, which is top)
+        
+        """
+
+        if toTop:
+            for i in range(num):
+                deck.append(self.stack.pop())
+        else:
+            for i in range(num):
+                deck.prepend(self.stack.pop())
+
+        
+
