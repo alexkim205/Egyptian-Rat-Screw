@@ -63,7 +63,7 @@ class Card():
         return "Card (%s %s)" % (self.suit, self.rank)
     
     def __str__(self):
-        """String representation"""
+        """Stringify"""
         return "<%s of %s>" % (suits[self.suit], ranks[self.rank])
 
 class CardStack():
@@ -82,6 +82,10 @@ class CardStack():
     -------
     __init__(self)
         Initialize an empty stack of cards
+    __repr__(self)
+        Representational string
+    __str__(self)
+        Stringify
     pop(self, i=-1)
         Pop off ith Card from top of stack
     peek(self)
@@ -98,6 +102,18 @@ class CardStack():
 
         self.stack = []
         self.size = 0
+    
+    def __repr__(self):
+        """Representational string representation"""
+        return "CardStack [%s]" % ", ".join(repr(c) for c in self.stack)
+    
+    def __str__(self):
+        """Stringify"""
+        s = "<CardStack\n"
+        for c in self.stack:
+            s += "\t" + str(c) + "\n"
+        s += ">"
+        return s
 
     def pop(self, i=-1):
         """Pop off ith Card from top of stack
@@ -165,10 +181,12 @@ class Deck(CardStack):
     -------
     __init__(self, size)
         Initialize a stack of 52 cards
+    __str__(self)
+
     shuffle(self)
         Shuffle the deck
-    to_hand(self, hand, num)
-        Move top [num] Cards from deck to Hand
+    to_hand(self, player, num)
+        Move top [num] Cards from deck to player's Hand
 
     """
 
@@ -187,20 +205,20 @@ class Deck(CardStack):
         """Shuffle deck"""
         shuffle(self.stack)
     
-    def to_hand(self, hand, num):
-        """Move top `num` Cards from deck to Hand
+    def to_hand(self, player, num):
+        """Move top `num` Cards from deck to player's Hand
         
         Parameters
         ----------
-        hand : Hand
-            Hand to add cards to
+        player : Player
+            Player to give cards to
         num : int
             Number of cards to move to Hand
 
         """
 
         for i in range(num):
-            hand.append(self.stack.pop())
+            player.hand.append(self.stack.pop())
 
     
 class Hand(CardStack):
@@ -250,4 +268,3 @@ class Hand(CardStack):
                 deck.prepend(self.stack.pop())
 
         
-
