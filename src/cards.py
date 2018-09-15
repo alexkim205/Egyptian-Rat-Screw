@@ -219,9 +219,8 @@ class Deck(CardStack):
             Number of cards to move to Hand
 
         """
-
         for i in range(num):
-            player.hand.append(self.stack.pop())
+            player.hand.append(self.pop())
 
     
 class Hand(CardStack):
@@ -265,7 +264,7 @@ class Hand(CardStack):
 
         if toTop:
             for i in range(num):
-                deck.append(self.stack.pop())
+                deck.append(self.pop())
         else:
             for i in range(num):
-                deck.prepend(self.stack.pop())
+                deck.prepend(self.pop())
