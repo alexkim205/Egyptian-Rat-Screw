@@ -11,6 +11,8 @@ Purpose:    define player class
 from cards import Hand
 from printer import *
 
+import random
+
 class Player:
     """
     A Player class
@@ -128,7 +130,7 @@ class Player:
         """
 
         slapIsGood = False
-        slapLogFormat = "{} rule. Deck won."
+        slapLogFormat = "{} Rule"
 
         def deck1(_deck):
             """If deck is 1 card
@@ -207,20 +209,21 @@ class Player:
             slapIsGood = False
 
         if not slapIsGood: 
-            print_slaprule("No rule. Slap lost.")
+            print_slaprule("None")
 
         return slapIsGood
 
 
 class Computer(Player):
 
-    # 1 (beginner CPU) - 5 (hard CPU)
-    seeds = range(5)
-
     def __init__(self, id=''):
-        """Initialize player object"""
+        """Initialize CPU object"""
+
+        super().__init__(id)
         
+        self.id = "CPU" + str(id)
         self.hand = Hand()
-        self.seed = 0
-    
+        self.seed = random.seed()
+        self.errorSlapRate = random.uniform(0, 1)
+        self.slapQuickness = random.uniform(0.2, 5)
     

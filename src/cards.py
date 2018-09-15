@@ -37,6 +37,10 @@ class Card():
         Representational string
     __str__(self)
         Stringify
+    value_ERS(self)
+        Get ERS value of Card
+    is_face(self)
+        Checks if Card is face card (J, Q, K, or A)
     """
 
     suits = ['♦', '♣', '♥', '♠']
@@ -65,7 +69,27 @@ class Card():
     
     def __str__(self):
         """Stringify"""
-        return "(%s%s)" % (self.ranks[self.rank], self.suits[self.suit])
+        return "|%s%s|" % (self.ranks[self.rank], self.suits[self.suit])
+    
+    def value_ERS(self):
+        """Get ERS value of Card"""
+        if self.rank == 11:
+            return 1
+        elif self.rank == 12:
+            return 2
+        elif self.rank == 13:
+            return 3
+        elif self.rank == 1:
+            return 4
+        else:
+            return 0
+    
+    def is_face(self):
+        """Checks if Card is face card (J, Q, K, or A)"""
+        if 11 <= self.rank <= 13 or self.rank == 1:
+            return True
+        else:
+            return False
 
 class CardStack():
     """A stack of cards. 
@@ -112,7 +136,8 @@ class CardStack():
     
     def __str__(self):
         """Stringify"""
-        s = "%s of %d cards: %s" % (self.__class__.__name__, self.size, " ".join(str(c) for c in self.stack))
+        s = "%s" % (" ".join(str(c) for c in self.stack))
+        # s = "%s of %d cards: %s" % (self.__class__.__name__, self.size, " ".join(str(c) for c in self.stack))
         # s = "{} of {} cards\n".format(self.__class__.__name__, self.size)
         # for c in self.stack:
         #     s += "  " + str(c) + "\n"
