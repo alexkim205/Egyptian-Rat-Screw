@@ -1,5 +1,5 @@
 # Egyptian Rat Screw
-A command line card game for ERS/Slap
+A UNIX command line card ERS/Slap game written in Python
 
 ## Prerequisites
 * Python>=3.6
