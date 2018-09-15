@@ -9,6 +9,7 @@ Purpose:    define player class
 '''
 
 from cards import Hand
+import logging
 
 class Player:
     """
@@ -63,6 +64,7 @@ class Player:
         
         """
 
+        logging.info("Player %s added a card", self.id)
         self.hand.to_deck(deck, 1, toTop=True)
     
     def burn(self, deck):
@@ -75,6 +77,7 @@ class Player:
         
         """
 
+        logging.info("TOUGH LUCK - Player %s burned a card", self.id)
         self.hand.to_deck(deck, 1, toTop=False)
 
     def slap(self, deck):
@@ -92,10 +95,12 @@ class Player:
 
         if(self._check_slap(deck)):
             # Good slap -> move all deck cards to hand
+            logging.info("Player %s slapped and won the deck.", self.id)
             deck.to_hand(self, deck.size, toTop=False)
             
         else:
             # Bad slap -> burn one card to front of deck
+            logging.info("Player %s slapped and lost so burned a card.", self.id)
             self.burn(deck)
 
     @staticmethod
@@ -123,14 +128,18 @@ class Player:
         """
 
         slapIsGood = False
+        slapLogFormat = "%s Rule. Deck won."
 
         def deck1(_deck):
             """If deck is 1 card
 
             * Jokers
             """
-            bool = _deck.stack[-1].rank == 11
-            return bool
+
+            if _deck.stack[-1].rank == 11:
+                logging.info(slapLogFormat, "Jokers")
+                return True
+            return False
 
         def deck2(_deck): 
             """If deck is 2 cards
@@ -140,14 +149,21 @@ class Player:
             * Tens - 2 cards
             * Marriage
             """
-            bool = \
-                _deck.stack[-1] == _deck.stack[-2] or \
-                _deck.stack[-1] == _deck.stack[0] or \
-                _deck.stack[-1].rank + _deck.stack[-2].rank == 10 or \
-                (_deck.stack[-1].rank == 12 and _deck.stack[-2].rank == 13) or \
-                (_deck.stack[-1].rank == 13 and _deck.stack[-2].rank == 12)
 
-            return bool
+            if _deck.stack[-1].rank == _deck.stack[-2].rank:
+                logging.info(slapLogFormat, "Double")
+                return True
+            if _deck.stack[-1].rank == _deck.stack[0].rank:
+                logging.info(slapLogFormat, "Top Bottom")
+                return True
+            if _deck.stack[-1].rank + _deck.stack[-2].rank == 10:
+                logging.info(slapLogFormat, "Tens - 2 cards")
+                return True
+            if (_deck.stack[-1].rank == 12 and _deck.stack[-2].rank == 13) or \
+                (_deck.stack[-1].rank == 13 and _deck.stack[-2].rank == 12):
+                logging.info(slapLogFormat, "Marriage")
+                return True
+            return False
 
         def deck3(_deck): 
             """If deck is 3 cards
@@ -155,37 +171,47 @@ class Player:
             * Sandwich
             * Tens - 3 cards
             """
-            bool = \
-                _deck.stack[-1] == _deck.stack[-3] or \
-                11 <= _deck.stack[-2].rank <= 13 and sum([e.rank for e in _deck.stack[-3:]]) == 10
-            
-            return bool
+
+            if _deck.stack[-1].rank == _deck.stack[-3].rank:
+                logging.info(slapLogFormat, "Sandwich")
+                return True
+            if 11 <= _deck.stack[-2].rank <= 13 and sum([e.rank for e in _deck.stack[-3:]]) == 10:
+                logging.info(slapLogFormat, "Tens - 3 cards")
+                return True
+            return False
             
         def deck4(_deck): 
             """If deck is 4 cards
             
             * Four in a row
             """
-            print([y.rank - x.rank for x, y in zip(_deck.stack[-4:-1], _deck.stack[-3:])])
-            bool = all(diff == 1 for diff in [y.rank - x.rank for x, y in zip(_deck.stack[-4:-1], _deck.stack[-3:])])
-            
-            return bool
+
+            if all(diff == 1 for diff in [y.rank - x.rank for x, y in zip(_deck.stack[-4:-1], _deck.stack[-3:])]):
+                logging.info(slapLogFormat, "Four in a row")
+                return True
+            return False
 
         if deck.size == 1:
-            if deck1(deck):
-                slapIsGood = True
+            print(deck1(deck))
+            slapIsGood = deck1(deck)
 
         elif deck.size == 2:
-            if deck1(deck) or deck2(deck):
-                slapIsGood = True
+            print(deck1(deck))
+            print(deck2(deck))
+            slapIsGood = deck1(deck) or deck2(deck)
 
         elif deck.size == 3:
-            if deck1(deck) or deck2(deck) or deck3(deck):
-                slapIsGood = True
+            print(deck1(deck))
+            print(deck2(deck))
+            print(deck3(deck))
+            slapIsGood = deck1(deck) or deck2(deck) or deck3(deck)
         
         elif deck.size >= 4:
-            if deck1(deck) or deck2(deck) or deck3(deck) or deck4(deck):
-                slapIsGood = True
+            print(deck1(deck))
+            print(deck2(deck))
+            print(deck3(deck))
+            print(deck4(deck))
+            slapIsGood = deck1(deck) or deck2(deck) or deck3(deck) or deck4(deck)
 
         else:
             slapIsGood = False
