@@ -10,6 +10,7 @@ Purpose:    define Card, Deck, Hand classes
 
 from functools import total_ordering
 from random import shuffle
+from printer import *
 
 @total_ordering
 class Card(): 
@@ -64,7 +65,7 @@ class Card():
     
     def __str__(self):
         """Stringify"""
-        return "%s of %s" % (self.suits[self.suit], self.ranks[self.rank])
+        return "(%s%s)" % (self.ranks[self.rank], self.suits[self.suit])
 
 class CardStack():
     """A stack of cards. 
@@ -86,6 +87,8 @@ class CardStack():
         Representational string
     __str__(self)
         Stringify
+    is_empty(self)
+        Checks if CardStack is empty
     pop(self, i=-1)
         Pop off ith Card from top of stack
     peek(self)
@@ -109,11 +112,23 @@ class CardStack():
     
     def __str__(self):
         """Stringify"""
-        s = "{} of {} cards\n".format(self.__class__.__name__, self.size)
-        for c in self.stack:
-            s += "  " + str(c) + "\n"
+        s = "%s of %d cards: %s" % (self.__class__.__name__, self.size, " ".join(str(c) for c in self.stack))
+        # s = "{} of {} cards\n".format(self.__class__.__name__, self.size)
+        # for c in self.stack:
+        #     s += "  " + str(c) + "\n"
 
         return s
+    
+    def is_empty(self):
+        """Checks if CardStack is empty
+        
+        Returns
+        -------
+        bool
+            Indicates True if CardStack is empty, False if not
+        """
+
+        return self.size == 0
 
     def pop(self, i=-1):
         """Pop off ith Card from top of stack
@@ -129,8 +144,12 @@ class CardStack():
             Card that is popped off stack
         """
 
-        self.size -= 1
-        return self.stack.pop(i)        
+        if not self.is_empty():
+            self.size -= 1
+            return self.stack.pop(i)
+        else:
+            raise IndexError("Cannot perform operation on empty %s.", self.__class__.__name__)
+        
 
     def peek(self):
         """Look at Card at top of stack
@@ -208,8 +227,8 @@ class Deck(CardStack):
         """Shuffle deck"""
         shuffle(self.stack)
     
-    def to_hand(self, player, num):
-        """Move top `num` Cards from deck to player's Hand
+    def to_hand(self, player, num, toTop=False):
+        """Move top `num` Cards from deck to top/bottom of player's Hand
         
         Parameters
         ----------
@@ -217,10 +236,21 @@ class Deck(CardStack):
             Player to give cards to
         num : int
             Number of cards to move to Hand
+        toTop : bool, optional
+            Indicates if card from hand should be added to top or 
+            bottom of Deck (the default is False, which is bottom)
 
         """
-        for i in range(num):
-            player.hand.append(self.pop())
+
+        if not self.is_empty():
+            if toTop:
+                for i in range(num):
+                    player.hand.append(self.pop())
+            else:
+                for i in range(num):
+                    player.hand.prepend(self.pop())
+        else:
+            raise IndexError("Cannot perform operation on empty %s." % self.__class__.__name__)
 
     
 class Hand(CardStack):
@@ -262,9 +292,12 @@ class Hand(CardStack):
         
         """
 
-        if toTop:
-            for i in range(num):
-                deck.append(self.pop())
+        if not self.is_empty():
+            if toTop:
+                for i in range(num):
+                    deck.append(self.pop())
+            else:
+                for i in range(num):
+                    deck.prepend(self.pop())
         else:
-            for i in range(num):
-                deck.prepend(self.pop())
+            raise IndexError("Cannot perform operation on empty %s." % self.__class__.__name__)
