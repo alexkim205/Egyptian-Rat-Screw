@@ -17,7 +17,9 @@ class Player:
     Attributes
     ----------
     num_cards : int
-        the number of cards the player has
+        The number of cards the player has
+    id : str
+        A player's id
     
     Methods
     -------
@@ -40,18 +42,16 @@ class Player:
         """Initialize player object"""
         
         self.hand = Hand()
+        self.id = id
 
     def __repr__(self):
         """Representational string representation"""
-        return "%s [%s]" % (self.__class__.__name__, ", ".join(repr(c) for c in self.stack))
+        return "%s(%s)" % (self.__class__.__name__, repr(self.hand))
     
     def __str__(self):
         """Stringify"""
-        s = "{} of {} cards\n".format(self.__class__.__name__, self.size)
-        for c in self.stack:
-            s += "  " + str(c) + "\n"
 
-        return s
+        return "%s %s has %s cards" % (self.__class__.__name__, self.id, self.hand.size)
 
     def spit(self, deck):
         """The player moves top card from hand to top of main deck
@@ -126,21 +126,21 @@ class Player:
 
         if (
             # Double
-            deck[-1] == deck[-2] or
+            deck.stack[-1] == deck.stack[-2] or
             # Sandwich
-            deck[-1] == deck[-3] or
+            deck.stack[-1] == deck.stack[-3] or
             # Top Bottom
-            deck[-1] == deck[0] or
+            deck.stack[-1] == deck.stack[0] or
             # Tens
-            (deck[-1].rank + deck[-2].rank == 10) or 
-            (11 <= deck[-2].rank <= 13 and sum([e.rank for e in deck[-3:]]) == 10) or
+            (deck.stack[-1].rank + deck.stack[-2].rank == 10) or 
+            (11 <= deck.stack[-2].rank <= 13 and sum([e.rank for e in deck.stack[-3:]]) == 10) or
             # Jokers
-            deck[-1].rank == 11 or
+            deck.stack[-1].rank == 11 or
             # Four in a row
-            all(diff == 1 for diff in [y - x for x, y in zip(deck[-4:-1], deck[-3:])]) # get differences
+            all(diff == 1 for diff in [y - x for x, y in zip(deck.stack[-4:-1], deck.stack[-3:])]) # get differences
             # Marriage 
-            (deck[-1] == 12 and deck[-2] == 13) or
-            (deck[-1] == 13 and deck[-2] == 12)
+            (deck.stack[-1] == 12 and deck.stack[-2] == 13) or
+            (deck.stack[-1] == 13 and deck.stack[-2] == 12)
         ): 
             slapIsGood = True
 
