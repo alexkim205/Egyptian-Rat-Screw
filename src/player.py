@@ -92,7 +92,7 @@ class Player:
 
         if(self._check_slap(deck)):
             # Good slap -> move all deck cards to hand
-            deck.to_hand(self.hand, deck.size)
+            deck.to_hand(self, deck.size, toTop=False)
             
         else:
             # Bad slap -> burn one card to front of deck
@@ -124,25 +124,71 @@ class Player:
 
         slapIsGood = False
 
-        if (
-            # Double
-            deck.stack[-1] == deck.stack[-2] or
-            # Sandwich
-            deck.stack[-1] == deck.stack[-3] or
-            # Top Bottom
-            deck.stack[-1] == deck.stack[0] or
-            # Tens
-            (deck.stack[-1].rank + deck.stack[-2].rank == 10) or 
-            (11 <= deck.stack[-2].rank <= 13 and sum([e.rank for e in deck.stack[-3:]]) == 10) or
-            # Jokers
-            deck.stack[-1].rank == 11 or
-            # Four in a row
-            all(diff == 1 for diff in [y - x for x, y in zip(deck.stack[-4:-1], deck.stack[-3:])]) # get differences
-            # Marriage 
-            (deck.stack[-1] == 12 and deck.stack[-2] == 13) or
-            (deck.stack[-1] == 13 and deck.stack[-2] == 12)
-        ): 
-            slapIsGood = True
+        def deck1(_deck):
+            """If deck is 1 card
+
+            * Jokers
+            """
+            bool = _deck.stack[-1].rank == 11
+            return bool
+
+        def deck2(_deck): 
+            """If deck is 2 cards
+
+            * Double
+            * Top Bottom
+            * Tens - 2 cards
+            * Marriage
+            """
+            bool = \
+                _deck.stack[-1] == _deck.stack[-2] or \
+                _deck.stack[-1] == _deck.stack[0] or \
+                _deck.stack[-1].rank + _deck.stack[-2].rank == 10 or \
+                (_deck.stack[-1].rank == 12 and _deck.stack[-2].rank == 13) or \
+                (_deck.stack[-1].rank == 13 and _deck.stack[-2].rank == 12)
+
+            return bool
+
+        def deck3(_deck): 
+            """If deck is 3 cards
+
+            * Sandwich
+            * Tens - 3 cards
+            """
+            bool = \
+                _deck.stack[-1] == _deck.stack[-3] or \
+                11 <= _deck.stack[-2].rank <= 13 and sum([e.rank for e in _deck.stack[-3:]]) == 10
+            
+            return bool
+            
+        def deck4(_deck): 
+            """If deck is 4 cards
+            
+            * Four in a row
+            """
+            print([y.rank - x.rank for x, y in zip(_deck.stack[-4:-1], _deck.stack[-3:])])
+            bool = all(diff == 1 for diff in [y.rank - x.rank for x, y in zip(_deck.stack[-4:-1], _deck.stack[-3:])])
+            
+            return bool
+
+        if deck.size == 1:
+            if deck1(deck):
+                slapIsGood = True
+
+        elif deck.size == 2:
+            if deck1(deck) or deck2(deck):
+                slapIsGood = True
+
+        elif deck.size == 3:
+            if deck1(deck) or deck2(deck) or deck3(deck):
+                slapIsGood = True
+        
+        elif deck.size >= 4:
+            if deck1(deck) or deck2(deck) or deck3(deck) or deck4(deck):
+                slapIsGood = True
+
+        else:
+            slapIsGood = False
 
         return slapIsGood
 
