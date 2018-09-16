@@ -1,17 +1,17 @@
-logWidth = 10
+logWidth = 13
 
 def print_info(message):
-    print("[INFO".ljust(10) + "]: " + message)
+    print("[INFO".ljust(logWidth) + "]: " + str(message))
 
 def print_player(message, i):
     concatP = "[PLAYER " + str(i)
-    print(concatP.ljust(10) + "]: " + message)
+    print(concatP.ljust(logWidth) + "]: " + str(message))
 
 def print_deck(message):
-    print("[DECK".ljust(10) + "]: " + message)
+    print("[DECK".ljust(logWidth) + "]: " + str(message))
 
 def print_score(message):
-    print("[SCORE".ljust(10) + "]: " + message)
+    print("[SCORE".ljust(logWidth) + "]: " + str(message))
 
 def print_slaprule(message):
-    print("[SLAP RULE".ljust(10) + "]: " + message)
+    print("[SLAP RULE".ljust(logWidth) + "]: " + str(message))

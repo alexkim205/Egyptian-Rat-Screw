@@ -12,6 +12,11 @@ from cards import Hand
 from printer import *
 
 import random
+import time
+
+import sneakysnek.keyboard_event
+import sneakysnek.keyboard_keys
+
 
 class Player:
     """
@@ -23,7 +28,7 @@ class Player:
         The number of cards the player has
     id : str
         A player's id
-    
+
     Methods
     -------
     __init__(self, id='')
@@ -43,14 +48,14 @@ class Player:
 
     def __init__(self, id=''):
         """Initialize player object"""
-        
+
         self.hand = Hand()
         self.id = id
 
     def __repr__(self):
         """Representational string representation"""
         return "%s(%s)" % (self.__class__.__name__, repr(self.hand))
-    
+
     def __str__(self):
         """Stringify"""
 
@@ -58,25 +63,25 @@ class Player:
 
     def spit(self, deck):
         """The player moves top card from hand to top of main deck
-        
+
         Parameters
         ----------
         deck : Deck
             The main deck to move card to
-        
+
         """
 
         print_player("Added a card", self.id)
         self.hand.to_deck(deck, 1, toTop=True)
-    
+
     def burn(self, deck):
         """The player "burns" top card from hand to bottom of main deck
-        
+
         Parameters
         ----------
         deck : Deck
             The main deck to move card to
-        
+
         """
 
         print_player("Burned a card", self.id)
@@ -87,12 +92,12 @@ class Player:
         The player slaps the main deck. If the slap is good, 
             the entire deck is transferred to the players hand.
             If not, the player must burn one card.
-        
+
         Parameters
         ----------
         deck : Deck
             The main deck that the player slapped
-        
+
         """
 
         print_player("Slapped the deck", self.id)
@@ -100,7 +105,7 @@ class Player:
         if(self._check_slap(deck)):
             # Good slap -> move all deck cards to hand
             deck.to_hand(self, deck.size, toTop=False)
-            
+
         else:
             # Bad slap -> burn one card to front of deck
             self.burn(deck)
@@ -108,7 +113,7 @@ class Player:
     @staticmethod
     def _check_slap(deck):
         """Check if deck is slappable 
-        
+
         Rules found here: (https://www.bicyclecards.com/how-to-play/egyptian-rat-screw/)
         * Double – When two cards of equivalent value are laid down consecutively. Ex: 5, 5
         * Sandwich – When two cards of equivalent value are laid down consecutively, but with one card of different value between them. Ex: 5, 7, 5
@@ -122,7 +127,7 @@ class Player:
         ----------
         deck : Deck
             The Deck that you want to check
-        
+
         Returns
         -------
         boolean
@@ -143,7 +148,7 @@ class Player:
                 return True
             return False
 
-        def deck2(_deck): 
+        def deck2(_deck):
             """If deck is 2 cards
 
             * Double
@@ -162,12 +167,12 @@ class Player:
                 print_slaprule(slapLogFormat.format("Tens - 2 cards"))
                 return True
             if (_deck.stack[-1].rank == 12 and _deck.stack[-2].rank == 13) or \
-                (_deck.stack[-1].rank == 13 and _deck.stack[-2].rank == 12):
+                    (_deck.stack[-1].rank == 13 and _deck.stack[-2].rank == 12):
                 print_slaprule(slapLogFormat.format("Marriage"))
                 return True
             return False
 
-        def deck3(_deck): 
+        def deck3(_deck):
             """If deck is 3 cards
 
             * Sandwich
@@ -181,10 +186,10 @@ class Player:
                 print_slaprule(slapLogFormat.format("Tens - 3 cards"))
                 return True
             return False
-            
-        def deck4(_deck): 
+
+        def deck4(_deck):
             """If deck is 4 cards
-            
+
             * Four in a row
             """
 
@@ -201,17 +206,63 @@ class Player:
 
         elif deck.size == 3:
             slapIsGood = deck1(deck) or deck2(deck) or deck3(deck)
-        
+
         elif deck.size >= 4:
-            slapIsGood = deck1(deck) or deck2(deck) or deck3(deck) or deck4(deck)
+            slapIsGood = deck1(deck) or deck2(
+                deck) or deck3(deck) or deck4(deck)
 
         else:
             slapIsGood = False
 
-        if not slapIsGood: 
+        if not slapIsGood:
             print_slaprule("None")
 
         return slapIsGood
+
+
+class User(Player):
+
+    def __init__(self, id='0'):
+        super().__init__(id)
+
+    def handler(self, event, deck):
+
+        global recorder
+
+        if (
+            isinstance(event, sneakysnek.keyboard_event.KeyboardEvent)
+            and event.event == sneakysnek.keyboard_event.KeyboardEvents.DOWN
+        ):
+            # print(event)
+
+            # ESCAPE pressed -> escape program
+            if (
+                event.keyboard_key
+                == sneakysnek.keyboard_keys.KeyboardKey.KEY_ESCAPE
+            ):
+                print("Exiting program.")
+                recorder.stop()
+            # RIGHT SHIFT pressed -> player spits
+            if (
+                event.keyboard_key
+                == sneakysnek.keyboard_keys.KeyboardKey.KEY_RIGHT_SHIFT
+            ):
+                self.spit(deck)
+                # TODO: Implement MYTURN
+                # if MYTURN:
+                #     me.spit(deck)
+                # else:
+                #     print_player("It's NOT your turn", me.id)
+            # LEFT SHIFT pressed -> player slaps
+            if (
+                event.keyboard_key
+                == sneakysnek.keyboard_keys.KeyboardKey.KEY_LEFT_SHIFT
+            ):
+                self.slap(deck)
+
+            print_deck(str(deck))
+            print_player(str(self.hand), self.id)
+            # self.scoreboard()
 
 
 class Computer(Player):
@@ -220,10 +271,49 @@ class Computer(Player):
         """Initialize CPU object"""
 
         super().__init__(id)
-        
+
         self.id = "CPU" + str(id)
         self.hand = Hand()
         self.seed = random.seed()
         self.errorSlapRate = random.uniform(0, 1)
-        self.slapQuickness = random.uniform(0.2, 5)
-    
+
+    def delay_spit(self, deck):
+        """Inherit slap function with random delay
+
+        Parameters
+        ----------
+        deck : Deck
+            The main deck to move card to
+
+        """
+
+        spitTime = random.uniform(0, 1)
+        time.sleep(spitTime)
+        super().spit(deck)
+
+    def delay_slap(self, deck):
+        """Inherit slap function with random delay
+
+        Parameters
+        ----------
+        deck : Deck
+            The main deck that the computer slapped
+
+        """
+
+        slapTime = random.uniform(0.2, 5)
+        time.sleep(slapTime)
+        super().slap(deck)
+
+    def might_slap(self, deck):
+        """Calls slap function based on probability that slap by CPU happens
+
+        Parameters
+        ----------
+        deck : Deck
+            The main deck that the computer slapped
+
+        """
+
+        if random.random() < self.errorSlapRate:
+            self.delay_slap(deck)
