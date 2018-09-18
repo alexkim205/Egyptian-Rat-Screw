@@ -225,7 +225,7 @@ class User(Player):
     def __init__(self, id='0'):
         super().__init__(id)
 
-    def handler(self, event, deck):
+    def key_handler(self, event, deck):
 
         global recorder
 
@@ -236,17 +236,18 @@ class User(Player):
             # print(event)
 
             # ESCAPE pressed -> escape program
-            if (
-                event.keyboard_key
-                == sneakysnek.keyboard_keys.KeyboardKey.KEY_ESCAPE
-            ):
-                print("Exiting program.")
-                recorder.stop()
-            # RIGHT SHIFT pressed -> player spits
+            # if (
+            #     event.keyboard_key
+            #     == sneakysnek.keyboard_keys.KeyboardKey.KEY_ESCAPE
+            # ):
+            #     print("Exiting program.")
+            #     recorder.stop()
+            # # RIGHT SHIFT pressed -> player spits
             if (
                 event.keyboard_key
                 == sneakysnek.keyboard_keys.KeyboardKey.KEY_RIGHT_SHIFT
             ):
+
                 self.spit(deck)
                 # TODO: Implement MYTURN
                 # if MYTURN:
@@ -260,8 +261,8 @@ class User(Player):
             ):
                 self.slap(deck)
 
-            print_deck(str(deck))
-            print_player(str(self.hand), self.id)
+            # print_deck(str(deck))
+            # print_player(str(self.hand), self.id)
             # self.scoreboard()
 
 
