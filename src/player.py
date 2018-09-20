@@ -14,10 +14,6 @@ from printer import *
 import random
 import time
 
-import sneakysnek.keyboard_event
-import sneakysnek.keyboard_keys
-
-
 class Player:
     """
     A Player class
@@ -106,10 +102,12 @@ class Player:
         if(self._check_slap(deck)):
             # Good slap -> move all deck cards to hand
             deck.to_hand(self, deck.size, toTop=False)
+            return True
 
         else:
             # Bad slap -> burn one card to front of deck
             self.burn(deck)
+            return False
 
     @staticmethod
     def _check_slap(deck):
@@ -226,44 +224,32 @@ class User(Player):
     def __init__(self, id='0'):
         super().__init__(id)
 
-    def key_handler(self, event, deck):
+        self.id = "USER" + str(id)
 
-        global recorder
+    # def key_handler(self, event, deck):
 
-        if (
-            isinstance(event, sneakysnek.keyboard_event.KeyboardEvent)
-            and event.event == sneakysnek.keyboard_event.KeyboardEvents.DOWN
-        ):
+    #     global recorder
 
-            # ESCAPE pressed -> escape program
-            # if (
-            #     event.keyboard_key
-            #     == sneakysnek.keyboard_keys.KeyboardKey.KEY_ESCAPE
-            # ):
-            #     print("Exiting program.")
-            #     recorder.stop()
-            # # RIGHT SHIFT pressed -> player spits
-            if (
-                event.keyboard_key
-                == sneakysnek.keyboard_keys.KeyboardKey.KEY_RIGHT_SHIFT
-            ):
+    #     if (
+    #         isinstance(event, sneakysnek.keyboard_event.KeyboardEvent)
+    #         and event.event == sneakysnek.keyboard_event.KeyboardEvents.DOWN
+    #     ):
 
-                self.spit(deck)
-                # TODO: Implement MYTURN
-                # if MYTURN:
-                #     me.spit(deck)
-                # else:
-                #     print_player("It's NOT your turn", me.id)
-            # LEFT SHIFT pressed -> player slaps
-            if (
-                event.keyboard_key
-                == sneakysnek.keyboard_keys.KeyboardKey.KEY_LEFT_SHIFT
-            ):
-                self.slap(deck)
+    #         if (
+    #             event.keyboard_key
+    #             == sneakysnek.keyboard_keys.KeyboardKey.KEY_RIGHT_SHIFT
+    #         ):
+    #             # RIGHT SHIFT pressed -> player spits
+    #             self.spit(deck)
 
-            print_deck(deck)
-            # print_player(str(self.hand), self.id)
-            # self.scoreboard()
+    #         if (
+    #             event.keyboard_key
+    #             == sneakysnek.keyboard_keys.KeyboardKey.KEY_LEFT_SHIFT
+    #         ):
+    #             # LEFT SHIFT pressed -> player slaps
+    #             self.slap(deck)
+
+    #         print_deck(deck)
 
 
 class Computer(Player):

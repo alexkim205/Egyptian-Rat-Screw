@@ -20,9 +20,8 @@ from printer import *
 from cpu import GameManager
 
 from sneakysnek.recorder import Recorder
-
-# Initialize lock to put around Deck object
-lock = Lock()  # lock around accessing deck data
+from sneakysnek.keyboard_event import KeyboardEvent as ke, KeyboardEvents as kes
+from sneakysnek.keyboard_keys import KeyboardKey as kk
 
 
 class ERS:
@@ -31,10 +30,11 @@ class ERS:
 
         self.numOfPlayers = numOfPlayers
         self.numOfCardsPerPlayer = 52 // numOfPlayers
+        self.playerDict = {}
         self.players = []
-        self.whoseTurn = []
 
-        self.whoseTurn = [True] + ([False] * (numOfPlayers - 1))
+        # Initialize lock to put around Deck object
+        self.lock = Lock()  # lock around accessing deck data
 
     def __str__(self):
 
@@ -53,7 +53,6 @@ class ERS:
         deck = Deck()
         deck.shuffle()
         print_deck(deck)
-        print(self.whoseTurn)
 
         # Initialize all players
         print_info(
@@ -61,78 +60,142 @@ class ERS:
                 self.numOfCardsPerPlayer, self.numOfPlayers
             )
         )
-        # Initialize player 0 - fork subprocess
 
-        # playerLock = Condition(lock)
+        listOfThreads = []
+
+        # Initialize player 0 - fork subprocess
+        user_id = 0
         playerProcess = Thread(
             target=self.player_process,
-            args=(self.players, self.whoseTurn, deck, self.numOfCardsPerPlayer, lock))
+            args=(user_id, deck))
 
-        playerProcess.start()
+        listOfThreads.append(playerProcess)
 
         # Initialize CPU's - fork subprocesses for CPU's
-        listOfCPU = []
         for cpu_id in range(1, self.numOfPlayers):
+
             # CPU Processes
-            # cpuLock = Condition(lock)
             cpuProcess = Thread(target=self.cpu_process,
-                                args=(self.players, self.whoseTurn, deck, self.numOfCardsPerPlayer, lock))
+                                args=(cpu_id, deck))
 
             cpuProcess.start()
-            listOfCPU.append(cpuProcess)
+            listOfThreads.append(cpuProcess)
 
-        for p in [playerProcess] + listOfCPU:
-            p.join()
+        for thread in listOfThreads:
+            thread.start()
+            thread.join()
 
         print_score(self)
 
     def controller(self, deck):
         pass
 
-    @staticmethod
-    def player_process(playerList, turnList, deck, numOfCardsPerPlayer, _lock):
+    # @staticmethod
+    def player_process(self, id, deck):
         import os
 
-        me = User()
-        playerList.append(me)
+        me = User(id)
 
         # == Entering the critical zone
-        _lock.acquire()
+        self.lock.acquire()
 
-        deck.to_hand(me, numOfCardsPerPlayer)
+        self.playerDict[me.id] = [id, True]
+        self.players.append(me)
+        deck.to_hand(me, self.numOfCardsPerPlayer)
 
-        _lock.release()
+        self.lock.release()
         # == Exiting the critical zone
 
         print_player(me, me.id)
+
+        # == Entering the critical zone
+        self.lock.acquire()
+
+        def key_handler(event):
+
+            global recorder
+
+            if isinstance(event, ke) and event.event == kes.DOWN:
+                # Listen to only keyboard events
+
+                if event.keyboard_key == kk.KEY_RIGHT_SHIFT:
+
+                    if self.playerDict[me.id][1] == True:
+                        # RIGHT SHIFT pressed -> player spits
+                        me.spit(deck)
+                    else:
+                        print_player("It's not your turn!", me.id)
+
+                if event.keyboard_key == kk.KEY_LEFT_SHIFT:
+                    # LEFT SHIFT pressed -> player slaps
+                    me.slap(deck)
+
+                print_deck(deck)
 
         # Initialize keypress recorder
         try:
             global recorder
             recorder = Recorder.record(
-                lambda event: me.key_handler(event, deck))
+                lambda event: key_handler(event))
         except IOError as error:
             print("Could not initialize keypress recorder: " + repr(error))
 
         while recorder.is_recording:
             pass
+        
+        self.lock.release()
+        # == Exiting the critical zone
 
-    @staticmethod
-    def cpu_process(playerList, turnList, deck, numOfCardsPerPlayer, _lock):
+    # @staticmethod
+    def cpu_process(self, id, deck):
         import os
 
-        cpu = Computer()
-        playerList.append(cpu)
+        cpu = Computer(id)
 
         # == Entering the critical zone
-        _lock.acquire()
+        self.lock.acquire()
 
-        deck.to_hand(cpu, numOfCardsPerPlayer)
+        # Append cpu: (int: index, bool: isTurn)
+        self.playerDict[cpu.id] = [id, False]
+        self.players.append(cpu)
+        deck.to_hand(cpu, self.numOfCardsPerPlayer)
 
-        _lock.release()
+        self.lock.release()
         # == Exiting the critical zone
 
         print_player(cpu, cpu.id)
+
+        # == Entering the critical zone
+        self.lock.acquire()
+
+        # Player loop, keep playing cards until winner exists
+        # old_len = len(deck)
+        while not self.winner_exists():
+
+            # Trigger only after deck has been changed
+            # (added or removed card)
+
+            if self.playerDict[cpu.id][1] == True:
+                # If player's turn
+                while True:
+
+                    cpu.delay_spit(deck)
+
+                    if deck.peek().is_face():
+                        # If player spits card and card is face card, \
+                        # stop spitting and reset turns
+                        next_index = (
+                            self.playerDict[cpu.id][0] + 1) % len(self.playerDict)
+                        self.playerDict[cpu.id][1] = False
+                        self.playerDict[next_index] = True
+
+                        break
+            else:
+                # If not player's turn, check if player can slap
+                cpu.might_slap(deck)
+        
+        self.lock.release()
+        # == Exiting the critical zone
 
     def winner_exists(self):
         """Checks if a winner exists
@@ -146,7 +209,7 @@ class ERS:
         playersWithCards = [i for i, player in enumerate(
             self.players) if not player.hand.size == 0]
 
-        if len(self.players) == 1:
+        if len(playersWithCards) == 1:
             return True
         else:
             return False
