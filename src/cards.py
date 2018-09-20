@@ -8,6 +8,8 @@ Purpose:    define Card, Deck, Hand classes
 
 '''
 
+import ctypes
+
 from functools import total_ordering
 from random import shuffle
 from printer import *
@@ -65,11 +67,12 @@ class Card():
 
     def __repr__(self):
         """Representational string representation"""
-        return "%s(%s %s)" % (self.__class__.__name__, self.suit, self.rank)
+        return "{}({} {})".format(self.__class__.__name__, self.suit, self.rank)
     
     def __str__(self):
         """Stringify"""
-        return "|%s%s|" % (self.ranks[self.rank], self.suits[self.suit])
+        return '|{:^2}{}|'.format(self.ranks[self.rank], self.suits[self.suit])
+        # return "|%s%s|" % (self.ranks[self.rank], self.suits[self.suit])
     
     def value_ERS(self):
         """Get ERS value of Card"""
@@ -132,17 +135,17 @@ class CardStack():
     
     def __repr__(self):
         """Representational string representation"""
-        return "%s [%s]" % (self.__class__.__name__, ", ".join(repr(c) for c in self.stack))
-    
+        return "{} [{}]".format(self.__class__.__name__, ", ".join(repr(c) for c in self.stack))
+
     def __str__(self):
         """Stringify"""
-        s = "%s" % (" ".join(str(c) for c in self.stack))
-        # s = "%s of %d cards: %s" % (self.__class__.__name__, self.size, " ".join(str(c) for c in self.stack))
-        # s = "{} of {} cards\n".format(self.__class__.__name__, self.size)
-        # for c in self.stack:
-        #     s += "  " + str(c) + "\n"
 
-        return s
+        if self.size > 13:
+            # If longer than 13, print shortened version with elipses
+            return "  ... {}".format(" ".join(str(c) for c in self.stack[-9:]))
+        else: 
+            # Otherwise print 10 cards
+            return "{}".format(" ".join(str(c) for c in self.stack)) 
     
     def is_empty(self):
         """Checks if CardStack is empty
@@ -170,8 +173,16 @@ class CardStack():
         """
 
         if not self.is_empty():
+            # Must be nonmutable to propagate through namespace: 
+            # https://stackoverflow.com/questions/9436757/how-does-multiprocessing-manager-work-in-python
+
+            temp = self.stack
+            removed = temp.pop(i)
+            
+            self.stack = temp
             self.size -= 1
-            return self.stack.pop(i)
+
+            return removed
         else:
             raise IndexError("Cannot perform operation on empty %s.", self.__class__.__name__)
         
@@ -197,7 +208,7 @@ class CardStack():
         
         """
 
-        self.stack.append(card)
+        self.stack += [card]
         self.size += 1
     
     def prepend(self, card):
@@ -210,7 +221,7 @@ class CardStack():
         
         """
 
-        self.stack.insert(0, card)
+        self.stack = [card] + self.stack
         self.size += 1
     
 
@@ -267,12 +278,19 @@ class Deck(CardStack):
 
         """
 
+        # print("Adresses inside deck: " + str(id(self)))
+        # print("Adresses inside player: " + str(id(player)))
+        # print("Deck object in class:")
+        # print(ctypes.cast(id(self), ctypes.py_object).value)
+
         if not self.is_empty():
             if toTop:
                 for i in range(num):
+                    # print(self)
                     player.hand.append(self.pop())
             else:
                 for i in range(num):
+                    # print(self.size)
                     player.hand.prepend(self.pop())
         else:
             raise IndexError("Cannot perform operation on empty %s." % self.__class__.__name__)

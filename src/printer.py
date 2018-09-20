@@ -15,3 +15,8 @@ def print_score(message):
 
 def print_slaprule(message):
     print("[SLAP RULE".ljust(logWidth) + "]: " + str(message))
+
+def print_scoreboard(game):
+    """Prints scores (# of cards) of each player"""
+
+

@@ -59,7 +59,8 @@ class Player:
     def __str__(self):
         """Stringify"""
 
-        return "%s %s has %s cards" % (self.__class__.__name__, self.id, self.hand.size)
+        return "%s" % (str(self.hand))
+        # return "%s %s has %s cards" % (self.__class__.__name__, self.id, self.hand.size)
 
     def spit(self, deck):
         """The player moves top card from hand to top of main deck
@@ -233,7 +234,6 @@ class User(Player):
             isinstance(event, sneakysnek.keyboard_event.KeyboardEvent)
             and event.event == sneakysnek.keyboard_event.KeyboardEvents.DOWN
         ):
-            # print(event)
 
             # ESCAPE pressed -> escape program
             # if (
@@ -261,7 +261,7 @@ class User(Player):
             ):
                 self.slap(deck)
 
-            # print_deck(str(deck))
+            print_deck(deck)
             # print_player(str(self.hand), self.id)
             # self.scoreboard()
 

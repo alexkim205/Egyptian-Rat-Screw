@@ -21,7 +21,7 @@ from cpu import GameManager
 
 from sneakysnek.recorder import Recorder
 
-# Initialize multiprocess Manager and Deck
+# Initialize lock to put around Deck object
 lock = Lock()  # lock around accessing deck data
 
 
@@ -36,25 +36,24 @@ class ERS:
 
         self.whoseTurn = [True] + ([False] * (numOfPlayers - 1))
 
+    def __str__(self):
+
+        playersScores = [
+            "Player {} has {} cards".format(i, player.hand.size)
+            for i, player in enumerate(game.players)
+        ]
+
+        return "; ".join(playersScores)
+
     def start_game(self):
 
         print_info("Game started!")
 
-        
-        # manager = GameManager()
-        # namespace = manager.Namespace()
-        # print(namespace)
-        # manager.start() 
-
-        # print("Adresses of deck proxy: " + str(id(manager.Deck)))
-
         # Initialize Deck
-        # deck = manager.Deck()
         deck = Deck()
         deck.shuffle()
-        # print_deck(deck)
-
-        # manager.start()
+        print_deck(deck)
+        print(self.whoseTurn)
 
         # Initialize all players
         print_info(
@@ -64,8 +63,6 @@ class ERS:
         )
         # Initialize player 0 - fork subprocess
 
-        print("DEBUG")
-
         # playerLock = Condition(lock)
         playerProcess = Thread(
             target=self.player_process,
@@ -73,25 +70,21 @@ class ERS:
 
         playerProcess.start()
 
-        print("PLAYER 0 subprocess started.")
-
         # Initialize CPU's - fork subprocesses for CPU's
         listOfCPU = []
         for cpu_id in range(1, self.numOfPlayers):
             # CPU Processes
             # cpuLock = Condition(lock)
             cpuProcess = Thread(target=self.cpu_process,
-                                    args=(self.players, self.whoseTurn, deck, self.numOfCardsPerPlayer, lock))
+                                args=(self.players, self.whoseTurn, deck, self.numOfCardsPerPlayer, lock))
 
             cpuProcess.start()
             listOfCPU.append(cpuProcess)
 
-        print("All CPU subprocesses started.")
-
-        print("Main program continues")
-
         for p in [playerProcess] + listOfCPU:
             p.join()
+
+        print_score(self)
 
     def controller(self, deck):
         pass
@@ -99,7 +92,6 @@ class ERS:
     @staticmethod
     def player_process(playerList, turnList, deck, numOfCardsPerPlayer, _lock):
         import os
-        print("Process ID:", os.getpid())
 
         me = User()
         playerList.append(me)
@@ -107,16 +99,7 @@ class ERS:
         # == Entering the critical zone
         _lock.acquire()
 
-        print("before:", str(deck.size))
-        remove = deck.pop()
-        # temp = deck.stack
-        # remove = temp.pop(-1)
-        # deck.stack = temp
-        # print("removed", str(remove))
-        print("after: ", str(len(deck.stack)))
-        # deck.to_hand(me, numOfCardsPerPlayer)
-        print("[DECK        ]: " + str(deck.size))
-        # print("[DECK        ]: Deck has " + str(deck.size) + " cards.")
+        deck.to_hand(me, numOfCardsPerPlayer)
 
         _lock.release()
         # == Exiting the critical zone
@@ -137,7 +120,6 @@ class ERS:
     @staticmethod
     def cpu_process(playerList, turnList, deck, numOfCardsPerPlayer, _lock):
         import os
-        print("Process ID:", os.getpid())
 
         cpu = Computer()
         playerList.append(cpu)
@@ -146,8 +128,7 @@ class ERS:
         _lock.acquire()
 
         deck.to_hand(cpu, numOfCardsPerPlayer)
-        print("[DECK        ]: " + str(deck.size))
-        
+
         _lock.release()
         # == Exiting the critical zone
 
@@ -169,12 +150,3 @@ class ERS:
             return True
         else:
             return False
-
-    def scoreboard(self):
-        """Prints scores (# of cards) of each player"""
-
-        playersScores = [
-            "Player {} has {} cards".format(i, player.hand.size)
-            for i, player in enumerate(self.players)
-        ]
-        print_score("; ".join(playersScores))
