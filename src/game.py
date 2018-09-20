@@ -8,9 +8,12 @@ Purpose:    define game class
 
 """
 
-from multiprocessing import Process, Condition, Lock
+import ctypes
 
-from player import Player, Computer
+# from multiprocessing import Process, Condition, Lock, Queue
+from threading import Lock, Thread
+
+from player import User, Computer
 from cards import Deck
 from printer import *
 
@@ -21,24 +24,37 @@ from sneakysnek.recorder import Recorder
 # Initialize multiprocess Manager and Deck
 lock = Lock()  # lock around accessing deck data
 
+
 class ERS:
 
     def __init__(self, numOfPlayers):
+
         self.numOfPlayers = numOfPlayers
         self.numOfCardsPerPlayer = 52 // numOfPlayers
         self.players = []
+        self.whoseTurn = []
+
         self.whoseTurn = [True] + ([False] * (numOfPlayers - 1))
 
     def start_game(self):
 
         print_info("Game started!")
 
-        gameManager = GameManager()
-        gameManager.start()
+        
+        # manager = GameManager()
+        # namespace = manager.Namespace()
+        # print(namespace)
+        # manager.start() 
+
+        # print("Adresses of deck proxy: " + str(id(manager.Deck)))
 
         # Initialize Deck
-        deck = gameManager.Deck()
+        # deck = manager.Deck()
+        deck = Deck()
         deck.shuffle()
+        # print_deck(deck)
+
+        # manager.start()
 
         # Initialize all players
         print_info(
@@ -47,71 +63,95 @@ class ERS:
             )
         )
         # Initialize player 0 - fork subprocess
-        me = gameManager.User()
-        deck.to_hand(me, self.numOfCardsPerPlayer)
-        self.players.append(me)
 
-        playerLock = Condition(lock)
-        playerProcess = Process(
-            target=self.player_process, args=(me, deck, playerLock, lock))
-        print_player(str(me), me.id)
+        print("DEBUG")
+
+        # playerLock = Condition(lock)
+        playerProcess = Thread(
+            target=self.player_process,
+            args=(self.players, self.whoseTurn, deck, self.numOfCardsPerPlayer, lock))
 
         playerProcess.start()
+
+        print("PLAYER 0 subprocess started.")
 
         # Initialize CPU's - fork subprocesses for CPU's
         listOfCPU = []
         for cpu_id in range(1, self.numOfPlayers):
-            cpu = gameManager.Computer(cpu_id)
-            deck.to_hand(cpu, self.numOfCardsPerPlayer)
-            self.players.append(cpu)
-
             # CPU Processes
-            cpuLock = Condition(lock)
-            cpuProcess = Process(target=self.cpu_process,
-                                 args=(cpu, deck, cpuLock, lock))
-
-            print_player(str(cpu), cpu.id)
+            # cpuLock = Condition(lock)
+            cpuProcess = Thread(target=self.cpu_process,
+                                    args=(self.players, self.whoseTurn, deck, self.numOfCardsPerPlayer, lock))
 
             cpuProcess.start()
             listOfCPU.append(cpuProcess)
 
+        print("All CPU subprocesses started.")
+
         print("Main program continues")
 
-        for p in [playerProcess] + listOfCPU: p.join()
-
+        for p in [playerProcess] + listOfCPU:
+            p.join()
 
     def controller(self, deck):
         pass
 
     @staticmethod
-    def player_process(player, deck, _playerLock, _lock):
+    def player_process(playerList, turnList, deck, numOfCardsPerPlayer, _lock):
         import os
         print("Process ID:", os.getpid())
 
+        me = User()
+        playerList.append(me)
+
+        # == Entering the critical zone
         _lock.acquire()
-        print(player)
+
+        print("before:", str(deck.size))
+        remove = deck.pop()
+        # temp = deck.stack
+        # remove = temp.pop(-1)
+        # deck.stack = temp
+        # print("removed", str(remove))
+        print("after: ", str(len(deck.stack)))
+        # deck.to_hand(me, numOfCardsPerPlayer)
+        print("[DECK        ]: " + str(deck.size))
+        # print("[DECK        ]: Deck has " + str(deck.size) + " cards.")
+
+        _lock.release()
+        # == Exiting the critical zone
+
+        print_player(me, me.id)
 
         # Initialize keypress recorder
         try:
             global recorder
-            recorder = Recorder.record(lambda event: player.handler(event, deck))
+            recorder = Recorder.record(
+                lambda event: me.key_handler(event, deck))
         except IOError as error:
             print("Could not initialize keypress recorder: " + repr(error))
 
         while recorder.is_recording:
             pass
 
-        # print(deck)
-        _lock.release()
-
     @staticmethod
-    def cpu_process(computer, deck, _cpuLock, _lock):
+    def cpu_process(playerList, turnList, deck, numOfCardsPerPlayer, _lock):
         import os
         print("Process ID:", os.getpid())
 
+        cpu = Computer()
+        playerList.append(cpu)
+
+        # == Entering the critical zone
         _lock.acquire()
-        print(computer.hand)
+
+        deck.to_hand(cpu, numOfCardsPerPlayer)
+        print("[DECK        ]: " + str(deck.size))
+        
         _lock.release()
+        # == Exiting the critical zone
+
+        print_player(cpu, cpu.id)
 
     def winner_exists(self):
         """Checks if a winner exists
