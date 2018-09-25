@@ -12,7 +12,8 @@ import ctypes
 
 # from multiprocessing import Process, Condition, Lock, Queue
 from threading import Lock, Thread, Event
-import queue, time
+import queue
+import time
 
 from player import User, Computer
 from cards import Deck
@@ -31,7 +32,7 @@ class ERS:
 
         self.numOfPlayers = numOfPlayers
         self.numOfCardsPerPlayer = 52 // numOfPlayers
-        self.playerDict = {}
+        # self.playerDict = 
         self.players = []
         self.turns = queue.Queue()
 
@@ -56,12 +57,11 @@ class ERS:
 
         while not self.winner_exists():
 
-            currentTurn = self.playerDict[counter % self.numOfPlayers][0]
+            currentTurn = self.players[counter % self.numOfPlayers].id
 
             print("Turn " + str(counter))
             print_score(self)
-            print(currentTurn + "'s turn now.")
-
+            print(str(currentTurn) + "'s turn now.")
 
             self.turns.put(currentTurn)
 
@@ -107,10 +107,18 @@ class ERS:
         # set player event
         for thread in self.threads:
             thread.start()
-        for thread in self.threads:
-            thread.join()
+        # for thread in self.threads:
+        #     thread.join()
 
         # Start game ticker to set turns
+        time.sleep(1)
+        print("Game in 3")
+        time.sleep(1)
+        print("Game in 2")
+        time.sleep(1)
+        print("Game in 1")
+
+        print("Starting ticker")
         self.ticker()
 
         print_score(self)
@@ -129,7 +137,7 @@ class ERS:
 
         # playerEvent = self.events[id]
 
-        self.playerDict[id] = [me.id, True]
+        # self.playerDict[id] = [me.id, True]
         self.players.append(me)
         deck.to_hand(me, self.numOfCardsPerPlayer)
 
@@ -143,10 +151,7 @@ class ERS:
                 if event.keyboard_key == kk.KEY_RIGHT_SHIFT:
                     # RIGHT SHIFT pressed -> player spits
 
-                    if self.playerDict[me.id][1] == True:
-                        me.spit(deck)
-                    else:
-                        print_player("It's not your turn!", me.id)
+                    me.spit(deck)
 
                 if event.keyboard_key == kk.KEY_LEFT_SHIFT:
                     # LEFT SHIFT pressed -> player slaps
@@ -159,33 +164,43 @@ class ERS:
                 print_deck(deck)
 
         while True:
+            # time.sleep(1)
+            # print("check queue in player process")
+
             try:
                 whoseTurn = self.turns.get(timeout=3)
+                self.turns.task_done()
+
+                # print("It is " + str(whoseTurn) + "'s turn")
+                # print(me.id)
+
+                if whoseTurn == me.id:
+
+                    # print("It is my turn!")
+                    # Initialize keypress recorder
+                    try:
+                        global recorder
+                        recorder = Recorder.record(
+                            lambda event: key_handler(event))
+                    except IOError as error:
+                        print(
+                            "Could not initialize keypress recorder: " + repr(error))
+
+                    while recorder.is_recording:
+                        pass
+
+                else:
+                    print("It is NOT my turn!")
+
             except queue.Empty:
                 print("queue is empty")
-                return
-            if whoseTurn == me.id:
-
-                print("It is my turn!")
-                # Initialize keypress recorder
-                try:
-                    global recorder
-                    recorder = Recorder.record(
-                        lambda event: key_handler(event))
-                except IOError as error:
-                    print("Could not initialize keypress recorder: " + repr(error))
-
-                while recorder.is_recording:
-                    pass
-
-            else:
-                print("It is NOT my turn!")
 
         # print_player(me, me.id)
 
         # == Exiting the critical zone
 
     # @staticmethod
+
     def cpu_process(self, id, deck):
         import os
 
@@ -195,7 +210,7 @@ class ERS:
         # self.lock.acquire()
 
         # Append cpu: (int: index, bool: isTurn)
-        self.playerDict[id] = [cpu.id, False]
+        # self.playerDict[id] = [cpu.id, False]
         self.players.append(cpu)
         deck.to_hand(cpu, self.numOfCardsPerPlayer)
 
@@ -210,25 +225,29 @@ class ERS:
         # old_len = len(deck)
 
         while True:
+            # time.sleep(1)
+            # print("check queue in cpu process")
 
             # print("cpu event set")
             # eventSet = cpuEvent.wait()
 
             try:
                 whoseTurn = self.turns.get(timeout=3)
-                print("It is " + whoseTurn + "'s turn")
+                self.turns.task_done()
+
+                # print("It is " + str(whoseTurn) + "'s turn")
+                # print(cpu.id)
+
+                if whoseTurn == cpu.id:
+
+                    print("It is cpu's turn!")
+                    # Initialize keypress recorder
+
+                else:
+                    print("It is NOT my turn!")
+
             except queue.Empty:
                 print("queue is empty")
-                return
-
-            if whoseTurn == cpu.id:
-
-                print("It is cpu's turn!")
-                # Initialize keypress recorder
-
-
-            else:
-                print("It is NOT my turn!")
 
                 # self.lock.acquire()
 
