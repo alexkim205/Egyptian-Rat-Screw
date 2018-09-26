@@ -19,4 +19,7 @@ def print_slaprule(message):
 def print_scoreboard(game):
     """Prints scores (# of cards) of each player"""
 
-
+# DEBUG
+def print_turns(game):
+    x = "; ".join(("P" + str(i) + ": " + ("Yes" if (len(list(q.queue)) != 0) else "No")) for i,q in enumerate(game.turns))
+    print(x)

@@ -34,7 +34,7 @@ class ERS:
         self.numOfCardsPerPlayer = 52 // numOfPlayers
         # self.playerDict = 
         self.players = []
-        self.turns = queue.Queue()
+        self.turns = [queue.Queue(maxsize=1) for _ in range(numOfPlayers)]
 
         # Initialize lock to put around Deck object
         self.lock = Lock()  # lock around accessing deck data
@@ -55,19 +55,27 @@ class ERS:
     def ticker(self):
         counter = 0
 
-        while not self.winner_exists():
+        # # After every turn, check if winner exists
+        # while not self.winner_exists():
 
-            currentTurn = self.players[counter % self.numOfPlayers].id
+        #     currentTurn = self.players[counter % self.numOfPlayers].id
 
-            print("Turn " + str(counter))
-            print_score(self)
-            print(str(currentTurn) + "'s turn now.")
+        #     print("Turn " + str(counter))
+        #     print_score(self)
+        #     print(str(currentTurn) + "'s turn now.")
 
-            self.turns.put(currentTurn)
+        #     self.turns.put(currentTurn)
 
-            counter += 1
+        #     counter += 1
 
-            time.sleep(2)
+        #     time.sleep(2)
+
+        # currentTurn = self.players[counter % self.numOfPlayers].id
+        # print("Turn " + str(counter))
+        # print(str(currentTurn) + "'s turn now.")
+        # activate queue 
+        self.turns[0].put(1)
+
 
     def start_game(self):
 
@@ -111,11 +119,11 @@ class ERS:
         #     thread.join()
 
         # Start game ticker to set turns
-        time.sleep(1)
+        # time.sleep(1)
         print("Game in 3")
-        time.sleep(1)
+        # time.sleep(1)
         print("Game in 2")
-        time.sleep(1)
+        # time.sleep(1)
         print("Game in 1")
 
         print("Starting ticker")
@@ -128,7 +136,6 @@ class ERS:
 
     # @staticmethod
     def player_process(self, id, deck):
-        import os
 
         me = User(id)
 
@@ -141,42 +148,73 @@ class ERS:
         self.players.append(me)
         deck.to_hand(me, self.numOfCardsPerPlayer)
 
+        def check_if_turn_is_over():
+            """ Player keeps spitting until turn is over.
+            
+            """
+
+            if not deck.peek().value_ERS() == 0:
+                # if the card that player put down is not face card, 
+                # then continue to ask for more cards
+                return True
+            else: 
+                # if card on top of stack is face card
+                return False
+            
+
         def key_handler(event):
+
+            # if check_if_turn_is_over():
+            #     # if turn is not over
 
             global recorder
 
             if isinstance(event, ke) and event.event == kes.DOWN:
-                # Listen to only keyboard events
+            # Listen to only keyboard events
 
                 if event.keyboard_key == kk.KEY_RIGHT_SHIFT:
                     # RIGHT SHIFT pressed -> player spits
 
                     me.spit(deck)
+                    recorder.stop()
+                    nextQueue.put(1)
 
                 if event.keyboard_key == kk.KEY_LEFT_SHIFT:
                     # LEFT SHIFT pressed -> player slaps
                     # self.lock.acquire()
 
                     me.slap(deck)
+                    recorder.stop()
+                    nextQueue.put(1)
 
                     # self.lock.release()
 
                 print_deck(deck)
+
+            # else:
+            #     # if turn is over, don't do anything even if keys pressed
+            #     print("waiting on other players...")
+            #     pass
+        
+        myQueue = self.turns[id]
+        nextQueue = self.turns[(id+1)%self.numOfPlayers]
 
         while True:
             # time.sleep(1)
             # print("check queue in player process")
 
             try:
-                whoseTurn = self.turns.get(timeout=3)
-                self.turns.task_done()
+
+                whoseTurn = myQueue.get(timeout=3)
+                print_turns(self)
 
                 # print("It is " + str(whoseTurn) + "'s turn")
                 # print(me.id)
 
-                if whoseTurn == me.id:
+                if whoseTurn:
 
                     # print("It is my turn!")
+                    print("do player stuff")
                     # Initialize keypress recorder
                     try:
                         global recorder
@@ -185,15 +223,16 @@ class ERS:
                     except IOError as error:
                         print(
                             "Could not initialize keypress recorder: " + repr(error))
-
+                    
                     while recorder.is_recording:
                         pass
 
-                else:
-                    print("It is NOT my turn!")
+                    print("player stuff done")
+                    
 
             except queue.Empty:
-                print("queue is empty")
+                print(".", end="")
+                # print("queue is empty bc its not user's turn")
 
         # print_player(me, me.id)
 
@@ -202,7 +241,9 @@ class ERS:
     # @staticmethod
 
     def cpu_process(self, id, deck):
-        import os
+
+        myQueue = self.turns[id]
+        nextQueue = self.turns[(id+1)%self.numOfPlayers]
 
         cpu = Computer(id)
 
@@ -232,22 +273,26 @@ class ERS:
             # eventSet = cpuEvent.wait()
 
             try:
-                whoseTurn = self.turns.get(timeout=3)
-                self.turns.task_done()
+
+                whoseTurn = myQueue.get(timeout=3)
+                print_turns(self)
 
                 # print("It is " + str(whoseTurn) + "'s turn")
                 # print(cpu.id)
 
-                if whoseTurn == cpu.id:
+                if whoseTurn:
 
-                    print("It is cpu's turn!")
+                    # print("It is cpu's turn!")
                     # Initialize keypress recorder
-
-                else:
-                    print("It is NOT my turn!")
+                    
+                    print("doing cpu stuff")
+                    time.sleep(5)
+                    print("cpu stuff done, added 1 to next queue")
+                    nextQueue.put(1)
 
             except queue.Empty:
-                print("queue is empty")
+                print(".", end="")
+                # print("queue is empty bc not cpu's turn")
 
                 # self.lock.acquire()
 
