@@ -265,45 +265,33 @@ class Computer(Player):
     self.id = "CPU" + str(id)
     self.hand = Hand()
     self.seed = random.seed()
-    self.errorSlapRate = random.uniform(0, 1)
+    self.errorSlapRate = 0 # random.uniform(0, 1) # TODO: not uniform
 
-  def delay_spit(self, deck):
-    """Inherit slap function with random delay
-
-        Parameters
-        ----------
-        deck : Deck
-            The main deck to move card to
-
-        """
-
+  def spit(self, deck):
+    """Inherit spit with a random delay
+    
+      Parameters
+      ----------
+      deck : Deck
+          The main deck to move card to
+    
+    """
     spitTime = random.uniform(0, 1)
     time.sleep(spitTime)
     super().spit(deck)
 
-  def delay_slap(self, deck):
-    """Inherit slap function with random delay
-
-        Parameters
-        ----------
-        deck : Deck
-            The main deck that the computer slapped
-
-        """
-
-    slapTime = random.uniform(0.2, 5)
-    time.sleep(slapTime)
-    super().slap(deck)
-
-  def might_slap(self, deck):
-    """Calls slap function based on probability that slap by CPU happens
-
-        Parameters
-        ----------
-        deck : Deck
-            The main deck that the computer slapped
-
-        """
+  def slap(self, deck):
+    """Inherit slap with a random delay and random error
+    
+      Parameters
+      ----------
+      deck : Deck
+          The main deck to move card to
+    
+    """
 
     if random.random() < self.errorSlapRate:
-      self.delay_slap(deck)
+      slapTime = random.uniform(
+          0.2, 3)  # probably convert to property for different diffculty levels
+      time.sleep(slapTime)
+      super().slap(deck)  # lmao a super slap
