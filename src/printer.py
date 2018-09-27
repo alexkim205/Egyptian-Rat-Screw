@@ -21,5 +21,5 @@ def print_scoreboard(game):
 
 # DEBUG
 def print_turns(game):
-    x = "; ".join(("P" + str(i) + ": " + ("Yes" if (len(list(q.queue)) != 0) else "No")) for i,q in enumerate(game.turns))
+    x = "; ".join(("P" + str(i) + ": " + ("Yes" if (not q.empty()) else "No")) for i,q in enumerate(game.turns))
     print(x)

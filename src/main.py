@@ -39,7 +39,7 @@ Marriage\tWhen a queen is placed over or under a king. Ex: Q, K or K,Q
 
 def main():
 
-    numOfPlayers = 4
+    numOfPlayers = 2
     
     game = ERS(numOfPlayers)
 

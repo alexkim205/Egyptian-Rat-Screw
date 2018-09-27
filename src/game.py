@@ -169,27 +169,51 @@ class ERS:
 
             global recorder
 
-            if isinstance(event, ke) and event.event == kes.DOWN:
-            # Listen to only keyboard events
+            if myQueue.qsize != 0:
+                # If and only if player's turn
+                if isinstance(event, ke) and event.event == kes.DOWN:
+                # Listen to only keyboard events
 
-                if event.keyboard_key == kk.KEY_RIGHT_SHIFT:
-                    # RIGHT SHIFT pressed -> player spits
+                    if event.keyboard_key == kk.KEY_RIGHT_SHIFT:
+                        # RIGHT SHIFT pressed -> player spits
 
-                    me.spit(deck)
-                    recorder.stop()
-                    nextQueue.put(1)
+                        me.spit(deck)
+                        
+                        # pop everything off my queue
+                        for q in self.turns:
+                            with q.mutex:
+                                q.queue.clear()
+                        # push 1 to next turn
+                        nextQueue.put(1)
 
-                if event.keyboard_key == kk.KEY_LEFT_SHIFT:
-                    # LEFT SHIFT pressed -> player slaps
-                    # self.lock.acquire()
+                        print_turns(self)
+                        
+                        recorder.stop()
 
-                    me.slap(deck)
-                    recorder.stop()
-                    nextQueue.put(1)
+                    if event.keyboard_key == kk.KEY_LEFT_SHIFT:
+                        # LEFT SHIFT pressed -> player slaps
+                        # self.lock.acquire()
 
-                    # self.lock.release()
+                        me.slap(deck)
+                        
+                        # pop everything off my queue
+                        for q in self.turns:
+                            with q.mutex:
+                                q.queue.clear()
+                        # push 1 to next turn
+                        nextQueue.put(1)
 
-                print_deck(deck)
+                        print_turns(self)
+
+                        recorder.stop()
+
+                        # self.lock.release()
+
+                    print_deck(deck)
+                
+            else:
+                # Not player's turn, don't allow keypress
+                pass
 
             # else:
             #     # if turn is over, don't do anything even if keys pressed
@@ -204,9 +228,10 @@ class ERS:
             # print("check queue in player process")
 
             try:
-
-                whoseTurn = myQueue.get(timeout=3)
-                print_turns(self)
+                
+                # print_turns(self)
+                whoseTurn = myQueue.get()
+                # print_turns(self)
 
                 # print("It is " + str(whoseTurn) + "'s turn")
                 # print(me.id)
@@ -231,7 +256,7 @@ class ERS:
                     
 
             except queue.Empty:
-                print(".", end="")
+                print(".")
                 # print("queue is empty bc its not user's turn")
 
         # print_player(me, me.id)
@@ -274,8 +299,7 @@ class ERS:
 
             try:
 
-                whoseTurn = myQueue.get(timeout=3)
-                print_turns(self)
+                whoseTurn = myQueue.get()
 
                 # print("It is " + str(whoseTurn) + "'s turn")
                 # print(cpu.id)
@@ -288,10 +312,20 @@ class ERS:
                     print("doing cpu stuff")
                     time.sleep(5)
                     print("cpu stuff done, added 1 to next queue")
+                    
+                    # pop everything off my queue
+                    for q in self.turns:
+                        with q.mutex:
+                            q.queue.clear()
+                    # push 1 to next turn
                     nextQueue.put(1)
 
+                    print_turns(self)
+
             except queue.Empty:
-                print(".", end="")
+                print(".")
+            
+
                 # print("queue is empty bc not cpu's turn")
 
                 # self.lock.acquire()
