@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-
 '''
 Author:     Alex Kim
 Project:    Egyptian Rat Screw(ERS), Slap Game
@@ -14,9 +13,10 @@ from functools import total_ordering
 from random import shuffle
 from printer import *
 
+
 @total_ordering
-class Card(): 
-    """A playing card.
+class Card():
+  """A playing card.
 
     Attributes
     ----------
@@ -45,57 +45,60 @@ class Card():
         Checks if Card is face card (J, Q, K, or A)
     """
 
-    suits = ['♦', '♣', '♥', '♠']
-    ranks = [None, "A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"]
+  suits = ['♦', '♣', '♥', '♠']
+  ranks = [
+      None, "A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"
+  ]
 
-    def __init__(self, suit = 0, rank = 0):
-        """Initialize Card with suit and rank; defaults to Diamonds 'None'"""
-        self.suit = suit
-        self.rank = rank
+  def __init__(self, suit=0, rank=0):
+    """Initialize Card with suit and rank; defaults to Diamonds 'None'"""
+    self.suit = suit
+    self.rank = rank
 
-    def __eq__(self, other):
-        """Checks = of self to other Card"""
-        return ((self.suit, self.rank) == (other.suit, other.rank))
+  def __eq__(self, other):
+    """Checks = of self to other Card"""
+    return ((self.suit, self.rank) == (other.suit, other.rank))
 
-    def __ne__(self, other):
-        """Checks != of self to other Card"""
-        return not (self == other)
-        
-    def __lt__(self, other):
-        """Checks < equality of self to other Card"""
-        return ((self.suit, self.rank) < (other.suit, other.rank))
+  def __ne__(self, other):
+    """Checks != of self to other Card"""
+    return not (self == other)
 
-    def __repr__(self):
-        """Representational string representation"""
-        return "{}({} {})".format(self.__class__.__name__, self.suit, self.rank)
-    
-    def __str__(self):
-        """Stringify"""
-        return '|{:^2}{}|'.format(self.ranks[self.rank], self.suits[self.suit])
-        # return "|%s%s|" % (self.ranks[self.rank], self.suits[self.suit])
-    
-    def value_ERS(self):
-        """Get ERS value of Card"""
-        if self.rank == 11:
-            return 1
-        elif self.rank == 12:
-            return 2
-        elif self.rank == 13:
-            return 3
-        elif self.rank == 1:
-            return 4
-        else:
-            return 0
-    
-    def is_face(self):
-        """Checks if Card is face card (J, Q, K, or A)"""
-        if 11 <= self.rank <= 13 or self.rank == 1:
-            return True
-        else:
-            return False
+  def __lt__(self, other):
+    """Checks < equality of self to other Card"""
+    return ((self.suit, self.rank) < (other.suit, other.rank))
+
+  def __repr__(self):
+    """Representational string representation"""
+    return "{}({} {})".format(self.__class__.__name__, self.suit, self.rank)
+
+  def __str__(self):
+    """Stringify"""
+    return '|{:^2}{}|'.format(self.ranks[self.rank], self.suits[self.suit])
+    # return "|%s%s|" % (self.ranks[self.rank], self.suits[self.suit])
+
+  def value_ERS(self):
+    """Get ERS value of Card"""
+    if self.rank == 11:
+      return 1
+    elif self.rank == 12:
+      return 2
+    elif self.rank == 13:
+      return 3
+    elif self.rank == 1:
+      return 4
+    else:
+      return 0
+
+  def is_face(self):
+    """Checks if Card is face card (J, Q, K, or A)"""
+    if 11 <= self.rank <= 13 or self.rank == 1:
+      return True
+    else:
+      return False
+
 
 class CardStack():
-    """A stack of cards. 
+  """A stack of cards. 
     
     Implement stack data structure.
 
@@ -127,28 +130,29 @@ class CardStack():
     
     """
 
-    def __init__(self):
-        """Initialize an empty stack of cards"""
+  def __init__(self):
+    """Initialize an empty stack of cards"""
 
-        self.stack = []
-        self.size = 0
-    
-    def __repr__(self):
-        """Representational string representation"""
-        return "{} [{}]".format(self.__class__.__name__, ", ".join(repr(c) for c in self.stack))
+    self.stack = []
+    self.size = 0
 
-    def __str__(self):
-        """Stringify"""
+  def __repr__(self):
+    """Representational string representation"""
+    return "{} [{}]".format(self.__class__.__name__, ", ".join(
+        repr(c) for c in self.stack))
 
-        if self.size > 13:
-            # If longer than 13, print shortened version with elipses
-            return "  ... {}".format(" ".join(str(c) for c in self.stack[-9:]))
-        else: 
-            # Otherwise print 10 cards
-            return "{}".format(" ".join(str(c) for c in self.stack)) 
-    
-    def is_empty(self):
-        """Checks if CardStack is empty
+  def __str__(self):
+    """Stringify"""
+
+    if self.size > 13:
+      # If longer than 13, print shortened version with elipses
+      return "  ... {}".format(" ".join(str(c) for c in self.stack[-9:]))
+    else:
+      # Otherwise print 10 cards
+      return "{}".format(" ".join(str(c) for c in self.stack))
+
+  def is_empty(self):
+    """Checks if CardStack is empty
         
         Returns
         -------
@@ -156,10 +160,10 @@ class CardStack():
             Indicates True if CardStack is empty, False if not
         """
 
-        return self.size == 0
+    return self.size == 0
 
-    def pop(self, i=-1):
-        """Pop off ith Card from top of stack
+  def pop(self, i=-1):
+    """Pop off ith Card from top of stack
         
         Parameters
         ----------
@@ -172,23 +176,23 @@ class CardStack():
             Card that is popped off stack
         """
 
-        if not self.is_empty():
-            # Must be nonmutable to propagate through namespace: 
-            # https://stackoverflow.com/questions/9436757/how-does-multiprocessing-manager-work-in-python
+    if not self.is_empty():
+      # Must be nonmutable to propagate through namespace:
+      # https://stackoverflow.com/questions/9436757/how-does-multiprocessing-manager-work-in-python
 
-            temp = self.stack
-            removed = temp.pop(i)
-            
-            self.stack = temp
-            self.size -= 1
+      temp = self.stack
+      removed = temp.pop(i)
 
-            return removed
-        else:
-            raise IndexError("Cannot perform operation on empty %s.", self.__class__.__name__)
-        
+      self.stack = temp
+      self.size -= 1
 
-    def peek(self):
-        """Look at Card at top of stack
+      return removed
+    else:
+      raise IndexError("Cannot perform operation on empty %s.",
+                       self.__class__.__name__)
+
+  def peek(self):
+    """Look at Card at top of stack
         
         Returns
         -------
@@ -196,10 +200,10 @@ class CardStack():
             Card at top of stack
         """
 
-        return self.stack[-1]
+    return self.stack[-1]
 
-    def append(self, card):
-        """Add Card to top of stack
+  def append(self, card):
+    """Add Card to top of stack
         
         Parameters
         ----------
@@ -208,11 +212,11 @@ class CardStack():
         
         """
 
-        self.stack += [card]
-        self.size += 1
-    
-    def prepend(self, card):
-        """Add Card to front of stack
+    self.stack += [card]
+    self.size += 1
+
+  def prepend(self, card):
+    """Add Card to front of stack
         
         Parameters
         ----------
@@ -221,12 +225,12 @@ class CardStack():
         
         """
 
-        self.stack = [card] + self.stack
-        self.size += 1
-    
+    self.stack = [card] + self.stack
+    self.size += 1
+
 
 class Deck(CardStack):
-    """A whole deck of cards, cards will be face up
+  """A whole deck of cards, cards will be face up
 
     Attributes
     ----------
@@ -248,23 +252,23 @@ class Deck(CardStack):
 
     """
 
-    def __init__(self):
-        """Initialize a stack of the 52 cards of a standard deck"""
+  def __init__(self):
+    """Initialize a stack of the 52 cards of a standard deck"""
 
-        super().__init__()
-        self.size = 52
+    super().__init__()
+    self.size = 52
 
-        for suit in range(4):
-            for rank in range(1, 14):
-                card = Card(suit, rank)
-                self.stack.append(card)
-    
-    def shuffle(self):
-        """Shuffle deck"""
-        shuffle(self.stack)
-    
-    def to_hand(self, player, num, toTop=False):
-        """Move top `num` Cards from deck to top/bottom of player's Hand
+    for suit in range(4):
+      for rank in range(1, 14):
+        card = Card(suit, rank)
+        self.stack.append(card)
+
+  def shuffle(self):
+    """Shuffle deck"""
+    shuffle(self.stack)
+
+  def to_hand(self, player, num, toTop=False):
+    """Move top `num` Cards from deck to top/bottom of player's Hand
         
         Parameters
         ----------
@@ -278,26 +282,27 @@ class Deck(CardStack):
 
         """
 
-        # print("Adresses inside deck: " + str(id(self)))
-        # print("Adresses inside player: " + str(id(player)))
-        # print("Deck object in class:")
-        # print(ctypes.cast(id(self), ctypes.py_object).value)
+    # print("Adresses inside deck: " + str(id(self)))
+    # print("Adresses inside player: " + str(id(player)))
+    # print("Deck object in class:")
+    # print(ctypes.cast(id(self), ctypes.py_object).value)
 
-        if not self.is_empty():
-            if toTop:
-                for i in range(num):
-                    # print(self)
-                    player.hand.append(self.pop())
-            else:
-                for i in range(num):
-                    # print(self.size)
-                    player.hand.prepend(self.pop())
-        else:
-            raise IndexError("Cannot perform operation on empty %s." % self.__class__.__name__)
+    if not self.is_empty():
+      if toTop:
+        for i in range(num):
+          # print(self)
+          player.hand.append(self.pop())
+      else:
+        for i in range(num):
+          # print(self.size)
+          player.hand.prepend(self.pop())
+    else:
+      raise IndexError(
+          "Cannot perform operation on empty %s." % self.__class__.__name__)
 
-    
+
 class Hand(CardStack):
-    """A player's hand, cards will be face down
+  """A player's hand, cards will be face down
 
     Attributes
     ----------
@@ -315,13 +320,13 @@ class Hand(CardStack):
 
     """
 
-    def __init__(self):
-        """Initialize an empty hand"""
+  def __init__(self):
+    """Initialize an empty hand"""
 
-        super().__init__()
-    
-    def to_deck(self, deck, num, toTop=True):
-        """Move top `num` Cards from Hand to top/bottom of Deck
+    super().__init__()
+
+  def to_deck(self, deck, num, toTop=True):
+    """Move top `num` Cards from Hand to top/bottom of Deck
         
         Parameters
         ----------
@@ -335,12 +340,13 @@ class Hand(CardStack):
         
         """
 
-        if not self.is_empty():
-            if toTop:
-                for i in range(num):
-                    deck.append(self.pop())
-            else:
-                for i in range(num):
-                    deck.prepend(self.pop())
-        else:
-            raise IndexError("Cannot perform operation on empty %s." % self.__class__.__name__)
+    if not self.is_empty():
+      if toTop:
+        for i in range(num):
+          deck.append(self.pop())
+      else:
+        for i in range(num):
+          deck.prepend(self.pop())
+    else:
+      raise IndexError(
+          "Cannot perform operation on empty %s." % self.__class__.__name__)

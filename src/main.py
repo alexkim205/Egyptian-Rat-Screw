@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-
 '''
 Author:     Alex Kim
 Project:    Egyptian Rat Screw(ERS), Slap Game
@@ -37,14 +36,16 @@ Four in a row\tWhen four cards with values in consistent ascending or descending
 Marriage\tWhen a queen is placed over or under a king. Ex: Q, K or K,Q
 """
 
+
 def main():
 
-    numOfPlayers = 2
-    
-    game = ERS(numOfPlayers)
+  numOfPlayers = 2
 
-    print(splash + rules)
-    game.start_game()
-    
+  game = ERS(numOfPlayers)
+
+  print(splash + rules)
+  game.start_game()
+
+
 if __name__ == '__main__':
-    main()
+  main()
