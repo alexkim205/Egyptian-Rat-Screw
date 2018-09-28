@@ -40,18 +40,9 @@ class ERS:
 
   def __str__(self):
 
-    playersScores = [
-        "Player {} has {} cards".format(i, player.hand.size)
-        for i, player in enumerate(self.players)
-    ]
-
-    return "; ".join(playersScores)
-
-  def ticker(self):
-    counter = 0
-    # activate queue
-    self.turns[0].put(1)
-    print_turns(self)
+    scores = "; ".join(("Player " + str(i) + ": " + str(p.hand.size))
+                       for i, p in enumerate(self.players))
+    return scores
 
   def start_game(self):
 
@@ -80,13 +71,8 @@ class ERS:
 
       self.threads.append(cpuProcess)
 
-    # for event in self.events:
-    #     event.set() # set each event
-    # set player event
     for thread in self.threads:
       thread.start()
-    # for thread in self.threads:
-    #     thread.join()
 
     # Start game ticker to set turns
     # time.sleep(1)
@@ -95,11 +81,9 @@ class ERS:
     print("Game in 2")
     # time.sleep(1)
     print("Game in 1")
+    print("Game starts now!")
 
-    print("Starting ticker")
-    self.ticker()
-
-    print_score(self)
+    self.turns[0].put(1)
 
   def controller(self, deck):
     pass
@@ -124,41 +108,19 @@ class ERS:
 
         if me.turnsLeft > 0:
           # if there are still turns left, don't change turns
-          print("it's your turn")
-          print_turnsLeft(self)
+          # print("it's your turn")
+          # print_turnsLeft(self)
 
           response = input("> ")
 
           if response == "f":
             # spit
-            me.spit(deck)
-            print_deck(deck)
-            print_player("Player {} has {} cards".format(id, me.hand.size), id)
-            me.turnsLeft -= 1
-            nextPlayer = self.players[(id + 1) % self.numOfPlayers]
-
-            value_of_last_card = deck.peek().value_ERS()
-
-            if value_of_last_card > 0:
-              # If the card just placed down is special, go to next player
-              me.turnsLeft = 0
-              nextPlayer.turnsLeft = value_of_last_card
-              nextPlayer.hasToBeat = True
-            elif me.turnsLeft == 0:
-              # If last card was placed down, check if go to next player
-              if value_of_last_card == 0 and me.hasToBeat:
-                # If value of last card is 0 and player had to beat other player's face card but lost, then other player takes deck
-                deck.to_hand(nextPlayer, deck.size)
-              elif value_of_last_card == 0 and not me.hasToBeat:
-                # If value of last card is 0 and player didn't have to beat other player's face card, then play continues
-                pass
-              me.hasToBeat = False
-              nextPlayer.turnsLeft = 1
-              nextPlayer.hasToBeat = False
+            self.game_logic(me, id, deck)
 
           elif response == "j":
             # slap
             me.slap(deck)
+            # print(self)
 
         elif me.turnsLeft == 0:
           # if there are no turns left, change turns
@@ -179,8 +141,6 @@ class ERS:
     self.players.append(cpu)
     deck.to_hand(cpu, self.numOfCardsPerPlayer)
 
-    print_player(cpu, cpu.id)
-
     while True:
 
       if not myQueue.empty():
@@ -188,54 +148,64 @@ class ERS:
 
         # Implement game logic here
         cpu.slap(deck)
+        # print(self)
 
         # Spit accordingly
 
         if cpu.turnsLeft > 0:
           # if there are still turns left, don't change turns
-          print("it's cpu's turn")
-          print_turnsLeft(self)
+          # print("it's cpu's turn")
+          # print_turnsLeft(self)
 
-          # spit
-          cpu.spit(deck)
-          print_deck(deck)
-          print_player("Player {} has {} cards".format(id, cpu.hand.size), id)
-          cpu.turnsLeft -= 1
-          nextPlayer = self.players[(id + 1) % self.numOfPlayers]
-          
-          value_of_last_card = deck.peek().value_ERS()
-
-          if value_of_last_card > 0:
-            # If the card just placed down is special, go to next player
-            cpu.turnsLeft = 0
-            nextPlayer.turnsLeft = value_of_last_card
-            nextPlayer.hasToBeat = True
-          elif cpu.turnsLeft == 0:
-            # If last card was placed down, check if go to next player
-            if value_of_last_card == 0 and cpu.hasToBeat:
-              # If value of last card is 0 and player had to beat other player's face card but lost, then other player takes deck
-              deck.to_hand(nextPlayer, deck.size)
-            elif value_of_last_card == 0 and not cpu.hasToBeat:
-              # If value of last card is 0 and player didn't have to beat other player's face card, then play continues
-              pass
-            cpu.hasToBeat = False
-            nextPlayer.turnsLeft = 1
-            nextPlayer.hasToBeat = False
+          self.game_logic(cpu, id, deck)
 
         elif cpu.turnsLeft == 0:
           # if there are no turns left, change turns
 
-          # pop everything off my queue
-          for q in self.turns:
-            with q.mutex:
-              q.queue.clear()
-          # push 1 to next turn
-          nextQueue.put(1)
+          self.change_turns(nextQueue)
 
       else:
         # Still check if cpu can slap
 
         cpu.slap(deck)
+
+  def game_logic(self, me, id, deck):
+
+    print_turnsLeft(self)
+
+    # spit
+    me.spit(deck)
+    me.turnsLeft -= 1
+    nextPlayer = self.players[(id + 1) % self.numOfPlayers]
+
+    value_of_last_card = deck.peek().value_ERS()
+
+    if value_of_last_card > 0:
+      # If the card just placed down is special, go to next player
+      me.turnsLeft = 0
+      nextPlayer.turnsLeft = value_of_last_card
+      nextPlayer.hasToBeat = True
+    elif me.turnsLeft == 0:
+      # If last card was placed down, check if go to next player
+      if value_of_last_card == 0 and me.hasToBeat:
+        # If value of last card is 0 and player had to beat other player's face card but lost, then other player takes deck
+        deck.to_hand(nextPlayer, deck.size)
+        # print(self)
+      elif value_of_last_card == 0 and not me.hasToBeat:
+        # If value of last card is 0 and player didn't have to beat other player's face card, then play continues
+        pass
+      me.hasToBeat = False
+      nextPlayer.turnsLeft = 1
+      nextPlayer.hasToBeat = False
+
+  def change_turns(self, nextQueue):
+
+    # pop everything off my queue
+    for q in self.turns:
+      with q.mutex:
+        q.queue.clear()
+    # push 1 to next turn
+    nextQueue.put(1)
 
   def winner_exists(self):
     """Checks if a winner exists

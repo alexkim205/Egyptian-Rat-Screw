@@ -70,8 +70,8 @@ class Player:
 
         """
 
-    print_player("Added a card", self.id)
     self.hand.to_deck(deck, 1, toTop=True)
+    print_player("+ %s" % (self.hand.peek()), self, self.id)
 
   def burn(self, deck):
     """The player "burns" top card from hand to bottom of main deck
@@ -83,8 +83,8 @@ class Player:
 
         """
 
-    print_player("Burned a card", self.id)
     self.hand.to_deck(deck, 1, toTop=False)
+    print_player("- %s" % (self.hand.peek()), self, self.id)
 
   def slap(self, deck):
     """
@@ -99,7 +99,7 @@ class Player:
 
         """
 
-    print_player("Slapped the deck", self.id)
+    print_player("Slapped the deck", self, self.id)
 
     if (self._check_slap(deck)):
       # Good slap -> move all deck cards to hand
@@ -228,7 +228,7 @@ class User(Player):
   def __init__(self, id='0'):
     super().__init__(id)
 
-    self.id = "USER" + str(id)
+    # self.id = "USER" + str(id)
 
   # def key_handler(self, event, deck):
 
@@ -263,7 +263,7 @@ class Computer(Player):
 
     super().__init__(id)
 
-    self.id = "CPU" + str(id)
+    # self.id = "CPU" + str(id)
     self.hand = Hand()
     self.seed = random.seed()
     self.errorSlapRate = 0 # random.uniform(0, 1) # TODO: not uniform
