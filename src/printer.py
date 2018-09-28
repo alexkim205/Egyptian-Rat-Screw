@@ -24,10 +24,16 @@ def print_slaprule(message):
 
 def print_scoreboard(game):
   """Prints scores (# of cards) of each player"""
-
+  
 
 # DEBUG
 def print_turns(game):
   x = "; ".join(("P" + str(i) + ": " + ("Yes" if (not q.empty()) else "No"))
                 for i, q in enumerate(game.turns))
+  x = "Whose turn - " + x
+  print(x)
+
+def print_turnsLeft(game):
+  x = "; ".join(("P" + str(i) + ": " + str(p.turnsLeft)) for i, p in enumerate(game.players))
+  x = "Turns left - " + x
   print(x)

@@ -104,63 +104,127 @@ class ERS:
   def controller(self, deck):
     pass
 
-  # @staticmethod
   def player_process(self, id, deck):
 
     me = User(id)
 
-    # == Entering the critical zone
-    # self.lock.acquire()
+    myQueue = self.turns[id]
+    nextQueue = self.turns[(id + 1) % self.numOfPlayers]
 
-    # playerEvent = self.events[id]
-
-    # self.playerDict[id] = [me.id, True]
     self.players.append(me)
     deck.to_hand(me, self.numOfCardsPerPlayer)
     me.turnsLeft = 1
 
-    def isStillTurn():
-      """ Check if still player's turn.
-
-            """
-
-      if not deck.peek().value_ERS() == 0:
-        # if the card that player put down is not face card,
-        # then continue to ask for more cards
-        return True
-      else:
-        # if card on top of stack is face card
-        return False
-
-    myQueue = self.turns[id]
-    nextQueue = self.turns[(id + 1) % self.numOfPlayers]
-
     while True:
 
-      # If not player's turn, continue
+      # If player's turn
       if not myQueue.empty():
-        print("it's your turn")
-        print_deck(deck)
 
         # Implement game logic here
 
-        # set turnsLeft if first turn
-        if me.turnsLeft == 0:
-          me.turnsLeft = deck.peek().value_ERS()
+        if me.turnsLeft > 0:
+          # if there are still turns left, don't change turns
+          print("it's your turn")
+          print_turnsLeft(self)
 
-        response = input("> ")
+          response = input("> ")
 
-        if response == "f":
-          # slap
-          me.spit(deck)
-          me.turnsLeft -= 1
+          if response == "f":
+            # spit
+            me.spit(deck)
+            print_deck(deck)
+            print_player("Player {} has {} cards".format(id, me.hand.size), id)
+            me.turnsLeft -= 1
+            nextPlayer = self.players[(id + 1) % self.numOfPlayers]
 
-        elif response == "j":
+            value_of_last_card = deck.peek().value_ERS()
+
+            if value_of_last_card > 0:
+              # If the card just placed down is special, go to next player
+              me.turnsLeft = 0
+              nextPlayer.turnsLeft = value_of_last_card
+              nextPlayer.hasToBeat = True
+            elif me.turnsLeft == 0:
+              # If last card was placed down, check if go to next player
+              if value_of_last_card == 0 and me.hasToBeat:
+                # If value of last card is 0 and player had to beat other player's face card but lost, then other player takes deck
+                deck.to_hand(nextPlayer, deck.size)
+              elif value_of_last_card == 0 and not me.hasToBeat:
+                # If value of last card is 0 and player didn't have to beat other player's face card, then play continues
+                pass
+              me.hasToBeat = False
+              nextPlayer.turnsLeft = 1
+              nextPlayer.hasToBeat = False
+
+          elif response == "j":
+            # slap
+            me.slap(deck)
+
+        elif me.turnsLeft == 0:
+          # if there are no turns left, change turns
+
+          # pop everything off my queue
+          for q in self.turns:
+            with q.mutex:
+              q.queue.clear()
+          # push 1 to next turn
+          nextQueue.put(1)
+
+  def cpu_process(self, id, deck):
+
+    cpu = Computer(id)
+    myQueue = self.turns[id]
+    nextQueue = self.turns[(id + 1) % self.numOfPlayers]
+
+    self.players.append(cpu)
+    deck.to_hand(cpu, self.numOfCardsPerPlayer)
+
+    print_player(cpu, cpu.id)
+
+    while True:
+
+      if not myQueue.empty():
+        # If player's turn
+
+        # Implement game logic here
+        cpu.slap(deck)
+
+        # Spit accordingly
+
+        if cpu.turnsLeft > 0:
+          # if there are still turns left, don't change turns
+          print("it's cpu's turn")
+          print_turnsLeft(self)
+
           # spit
-          me.slap(deck)
+          cpu.spit(deck)
+          print_deck(deck)
+          print_player("Player {} has {} cards".format(id, cpu.hand.size), id)
+          cpu.turnsLeft -= 1
+          nextPlayer = self.players[(id + 1) % self.numOfPlayers]
+          
+          value_of_last_card = deck.peek().value_ERS()
 
-        # if there are still turns left, don't change turns
-        if me.turnsLeft == 0:
+          if value_of_last_card > 0:
+            # If the card just placed down is special, go to next player
+            cpu.turnsLeft = 0
+            nextPlayer.turnsLeft = value_of_last_card
+            nextPlayer.hasToBeat = True
+          elif cpu.turnsLeft == 0:
+            # If last card was placed down, check if go to next player
+            if value_of_last_card == 0 and cpu.hasToBeat:
+              # If value of last card is 0 and player had to beat other player's face card but lost, then other player takes deck
+              deck.to_hand(nextPlayer, deck.size)
+            elif value_of_last_card == 0 and not cpu.hasToBeat:
+              # If value of last card is 0 and player didn't have to beat other player's face card, then play continues
+              pass
+            cpu.hasToBeat = False
+            nextPlayer.turnsLeft = 1
+            nextPlayer.hasToBeat = False
+
+        elif cpu.turnsLeft == 0:
+          # if there are no turns left, change turns
+
           # pop everything off my queue
           for q in self.turns:
             with q.mutex:
@@ -169,63 +233,9 @@ class ERS:
           nextQueue.put(1)
 
       else:
+        # Still check if cpu can slap
 
-        pass
-
-  def cpu_process(self, id, deck):
-
-    myQueue = self.turns[id]
-    nextQueue = self.turns[(id + 1) % self.numOfPlayers]
-
-    cpu = Computer(id)
-
-    # == Entering the critical zone
-    # self.lock.acquire()
-
-    # Append cpu: (int: index, bool: isTurn)
-    # self.playerDict[id] = [cpu.id, False]
-    self.players.append(cpu)
-    deck.to_hand(cpu, self.numOfCardsPerPlayer)
-
-    # self.lock.release()
-    # == Exiting the critical zone
-
-    print_player(cpu, cpu.id)
-
-    # cpuEvent = self.events[id]
-
-    # Player loop, keep playing cards until winner exists
-    # old_len = len(deck)
-
-    while True:
-
-      try:
-
-        whoseTurn = myQueue.get()
-
-        # print("It is " + str(whoseTurn) + "'s turn")
-        # print(cpu.id)
-
-        if whoseTurn:
-
-          # print("It is cpu's turn!")
-          # Initialize keypress recorder
-
-          print("doing cpu stuff")
-          time.sleep(5)
-          print("cpu stuff done, added 1 to next queue")
-
-          # pop everything off my queue
-          for q in self.turns:
-            with q.mutex:
-              q.queue.clear()
-          # push 1 to next turn
-          nextQueue.put(1)
-
-          print_turns(self)
-
-      except queue.Empty:
-        print(".")
+        cpu.slap(deck)
 
   def winner_exists(self):
     """Checks if a winner exists

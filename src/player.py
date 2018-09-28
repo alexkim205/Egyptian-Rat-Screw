@@ -48,6 +48,7 @@ class Player:
     self.hand = Hand()
     self.id = id
     self.turnsLeft = 0
+    self.hasToBeat = False
 
   def __repr__(self):
     """Representational string representation"""
