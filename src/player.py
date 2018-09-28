@@ -70,8 +70,8 @@ class Player:
 
         """
 
+    print_player("+ %s" % (self.hand.peek()), self)
     self.hand.to_deck(deck, 1, toTop=True)
-    print_player("+ %s" % (self.hand.peek()), self, self.id)
 
   def burn(self, deck):
     """The player "burns" top card from hand to bottom of main deck
@@ -82,9 +82,8 @@ class Player:
             The main deck to move card to
 
         """
-
+    print_player("- %s" % (self.hand.peek()), self)
     self.hand.to_deck(deck, 1, toTop=False)
-    print_player("- %s" % (self.hand.peek()), self, self.id)
 
   def slap(self, deck):
     """
@@ -99,7 +98,7 @@ class Player:
 
         """
 
-    print_player("Slapped the deck", self, self.id)
+    print_player("Slapped the deck", self)
 
     if (self._check_slap(deck)):
       # Good slap -> move all deck cards to hand

@@ -51,7 +51,7 @@ class ERS:
     # Initialize Deck
     deck = Deck()
     deck.shuffle()
-    print_deck(deck)
+    # print_deck(deck)
 
     # Initialize all players
     print_info("Dealing {} cards each to {} players".format(
@@ -171,12 +171,13 @@ class ERS:
 
   def game_logic(self, me, id, deck):
 
-    print_turnsLeft(self)
+    # print_turnsLeft(self)
 
     # spit
     me.spit(deck)
     me.turnsLeft -= 1
     nextPlayer = self.players[(id + 1) % self.numOfPlayers]
+    prevPlayer = self.players[(id - 1) % self.numOfPlayers]
 
     value_of_last_card = deck.peek().value_ERS()
 
@@ -189,6 +190,8 @@ class ERS:
       # If last card was placed down, check if go to next player
       if value_of_last_card == 0 and me.hasToBeat:
         # If value of last card is 0 and player had to beat other player's face card but lost, then other player takes deck
+        whoWon = "You" if prevPlayer.id == 0 else "Player %d" % (prevPlayer.id)
+        print_player("+ %d cards. %s won the deck!" % (deck.size, whoWon), prevPlayer)
         deck.to_hand(nextPlayer, deck.size)
         # print(self)
       elif value_of_last_card == 0 and not me.hasToBeat:

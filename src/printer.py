@@ -5,8 +5,8 @@ def print_info(message):
   print("> [INFO".ljust(logWidth) + "]: " + str(message))
 
 
-def print_player(message, player, i):
-  concatP = "> [PLAYER %d (%d)" % (i, player.hand.size)
+def print_player(message, player):
+  concatP = "> [PLAYER %d (%d)" % (player.id, player.hand.size)
   print(concatP.ljust(logWidth) + "]: " + str(message))
 
 
