@@ -10,7 +10,7 @@ Purpose:    define game class
 import ctypes
 
 # from multiprocessing import Process, Condition, Lock, Queue
-from threading import Lock, Thread, Event
+from threading import Lock, Thread, Event, Timer
 import queue
 import time
 
@@ -74,15 +74,6 @@ class ERS:
     for thread in self.threads:
       thread.start()
 
-    # Start game ticker to set turns
-    # time.sleep(1)
-    print("Game in 3")
-    # time.sleep(1)
-    print("Game in 2")
-    # time.sleep(1)
-    print("Game in 1")
-    print("Game starts now!")
-
     self.turns[0].put(1)
 
   def controller(self, deck):
@@ -108,10 +99,8 @@ class ERS:
 
         if me.turnsLeft > 0:
           # if there are still turns left, don't change turns
-          # print("it's your turn")
-          # print_turnsLeft(self)
 
-          response = input("> ")
+          response = input("> ")  #"> spit?(f)/slap?(j) "
 
           if response == "f":
             # spit
@@ -121,16 +110,18 @@ class ERS:
             # slap
             me.slap(deck)
             # print(self)
+          
+          elif response == "d":
+            # print deck
+            print_deck(deck)
 
         elif me.turnsLeft == 0:
           # if there are no turns left, change turns
+          self.change_turns(nextQueue)
 
-          # pop everything off my queue
-          for q in self.turns:
-            with q.mutex:
-              q.queue.clear()
-          # push 1 to next turn
-          nextQueue.put(1)
+      # Even if not player's turn, ask for response; only choice is slap
+      else:
+        pass
 
   def cpu_process(self, id, deck):
 
@@ -147,8 +138,10 @@ class ERS:
         # If player's turn
 
         # Implement game logic here
-        cpu.slap(deck)
-        # print(self)
+
+        # Still check if cpu can slap
+        if cpu._check_slap(deck) is not False:
+          cpu.slap(deck)
 
         # Spit accordingly
 
@@ -156,7 +149,7 @@ class ERS:
           # if there are still turns left, don't change turns
           # print("it's cpu's turn")
           # print_turnsLeft(self)
-
+          
           self.game_logic(cpu, id, deck)
 
         elif cpu.turnsLeft == 0:
@@ -166,12 +159,14 @@ class ERS:
 
       else:
         # Still check if cpu can slap
-
-        cpu.slap(deck)
+        if cpu._check_slap(deck) is not False:
+          print_deck(deck)
+          cpu.slap(deck)
 
   def game_logic(self, me, id, deck):
 
     # print_turnsLeft(self)
+    # print_deck(deck)
 
     # spit
     me.spit(deck)
@@ -189,26 +184,28 @@ class ERS:
     elif me.turnsLeft == 0:
       # If last card was placed down, check if go to next player
       if value_of_last_card == 0 and me.hasToBeat:
-        # If value of last card is 0 and player had to beat other player's face card but lost, then other player takes deck
+        # If value of last card is 0 and player had to beat other player's face card but lost, then previous player takes deck
         whoWon = "You" if prevPlayer.id == 0 else "Player %d" % (prevPlayer.id)
-        print_player("+ %d cards. %s won the deck!" % (deck.size, whoWon), prevPlayer)
-        deck.to_hand(nextPlayer, deck.size)
+        print_player("+ %d cards. %s won the deck!" % (deck.size, whoWon),
+                     prevPlayer)
+        deck.to_hand(prevPlayer, deck.size)
+        prevPlayer.turnsLeft = 1
         # print(self)
       elif value_of_last_card == 0 and not me.hasToBeat:
         # If value of last card is 0 and player didn't have to beat other player's face card, then play continues
-        pass
+        nextPlayer.turnsLeft = 1
+      me.turnsLeft = 0
       me.hasToBeat = False
-      nextPlayer.turnsLeft = 1
       nextPlayer.hasToBeat = False
 
-  def change_turns(self, nextQueue):
+  def change_turns(self, queue):
 
-    # pop everything off my queue
     for q in self.turns:
       with q.mutex:
         q.queue.clear()
-    # push 1 to next turn
-    nextQueue.put(1)
+    queue.put(1)
+
+    # print_turns(self)
 
   def winner_exists(self):
     """Checks if a winner exists

@@ -49,6 +49,8 @@ class Player:
     self.id = id
     self.turnsLeft = 0
     self.hasToBeat = False
+    # self.prevPlayer <- implement like linked list?
+    # self.nextPlayer <- implement like linked list?
 
   def __repr__(self):
     """Representational string representation"""
@@ -70,8 +72,9 @@ class Player:
 
         """
 
-    print_player("+ %s" % (self.hand.peek()), self)
+    temp = self.hand.peek()
     self.hand.to_deck(deck, 1, toTop=True)
+    print_player("+ %s" % (temp), self, replace=True)
 
   def burn(self, deck):
     """The player "burns" top card from hand to bottom of main deck
@@ -82,7 +85,7 @@ class Player:
             The main deck to move card to
 
         """
-    print_player("- %s" % (self.hand.peek()), self)
+    # print_player("- %s" % (self.hand.peek()), self)
     self.hand.to_deck(deck, 1, toTop=False)
 
   def slap(self, deck):
@@ -98,16 +101,23 @@ class Player:
 
         """
 
-    print_player("Slapped the deck", self)
+    print_player("slapped the deck", self)
 
-    if (self._check_slap(deck)):
+    slapRule = self._check_slap(deck)
+    if (slapRule is not False):
       # Good slap -> move all deck cards to hand
+      whoWon = "You" if self.id == 0 else "Player %d" % (self.id)
+      print_player(
+          "+ %d cards. %s won the deck with the %s!" % (deck.size, whoWon,
+                                                             slapRule), self)
       deck.to_hand(self, deck.size, toTop=False)
       return True
 
     else:
       # Bad slap -> burn one card to front of deck
+      temp = self.hand.peek()
       self.burn(deck)
+      print_player("- %s Bad slap!" % (temp), self)
       return False
 
   @staticmethod
@@ -135,18 +145,20 @@ class Player:
         """
 
     slapIsGood = False
+    slapRule = None
     slapLogFormat = "{} Rule"
 
     def deck1(_deck):
-      """If deck is 1 card
+      # """If deck is 1 card
 
-            * Jokers
-            """
+      #       * Jokers
+      #       """
 
-      if _deck.stack[-1].rank == 11:
-        print_slaprule(slapLogFormat.format("Jokers"))
-        return True
-      return False
+      # if _deck.stack[-1].rank == 11:
+      #   _slapRule = slapLogFormat.format("Jokers")
+      #   return True
+      # return False
+      return []  # don't implement Joker card
 
     def deck2(_deck):
       """If deck is 2 cards
@@ -158,19 +170,15 @@ class Player:
             """
 
       if _deck.stack[-1].rank == _deck.stack[-2].rank:
-        print_slaprule(slapLogFormat.format("Double"))
-        return True
+        return [slapLogFormat.format("Double")]
       if _deck.stack[-1].rank == _deck.stack[0].rank:
-        print_slaprule(slapLogFormat.format("Top Bottom"))
-        return True
+        return [slapLogFormat.format("Top Bottom")]
       if _deck.stack[-1].rank + _deck.stack[-2].rank == 10:
-        print_slaprule(slapLogFormat.format("Tens - 2 cards"))
-        return True
+        return [slapLogFormat.format("Tens - 2 cards")]
       if (_deck.stack[-1].rank == 12 and _deck.stack[-2].rank == 13) or \
               (_deck.stack[-1].rank == 13 and _deck.stack[-2].rank == 12):
-        print_slaprule(slapLogFormat.format("Marriage"))
-        return True
-      return False
+        return [slapLogFormat.format("Marriage")]
+      return []
 
     def deck3(_deck):
       """If deck is 3 cards
@@ -180,13 +188,11 @@ class Player:
             """
 
       if _deck.stack[-1].rank == _deck.stack[-3].rank:
-        print_slaprule(slapLogFormat.format("Sandwich"))
-        return True
+        return [slapLogFormat.format("Sandwich")]
       if 11 <= _deck.stack[-2].rank <= 13 and sum(
           [e.rank for e in _deck.stack[-3:]]) == 10:
-        print_slaprule(slapLogFormat.format("Tens - 3 cards"))
-        return True
-      return False
+        return [slapLogFormat.format("Tens - 3 cards")]
+      return []
 
     def deck4(_deck):
       """If deck is 4 cards
@@ -197,62 +203,34 @@ class Player:
       if all(diff == 1 for diff in [
           y.rank - x.rank for x, y in zip(_deck.stack[-4:-1], _deck.stack[-3:])
       ]):
-        print_slaprule(slapLogFormat.format("Four in a row"))
-        return True
-      return False
+        return [slapLogFormat.format("Four in a row")]
+      return []
 
     if deck.size == 1:
-      slapIsGood = deck1(deck)
+      slapRule = deck1(deck)
 
     elif deck.size == 2:
-      slapIsGood = deck1(deck) or deck2(deck)
+      slapRule = deck1(deck) + deck2(deck)
 
     elif deck.size == 3:
-      slapIsGood = deck1(deck) or deck2(deck) or deck3(deck)
+      slapRule = deck1(deck) + deck2(deck) + deck3(deck)
 
     elif deck.size >= 4:
-      slapIsGood = deck1(deck) or deck2(deck) or deck3(deck) or deck4(deck)
+      slapRule = deck1(deck) + deck2(deck) + deck3(deck) + deck4(deck)
 
     else:
-      slapIsGood = False
+      slapRule = []
 
-    if not slapIsGood:
-      print_slaprule("None")
-
-    return slapIsGood
+    if len(slapRule) == 0:
+      return False
+    else:
+      return slapRule[0]
 
 
 class User(Player):
 
   def __init__(self, id='0'):
     super().__init__(id)
-
-    # self.id = "USER" + str(id)
-
-  # def key_handler(self, event, deck):
-
-  #     global recorder
-
-  #     if (
-  #         isinstance(event, sneakysnek.keyboard_event.KeyboardEvent)
-  #         and event.event == sneakysnek.keyboard_event.KeyboardEvents.DOWN
-  #     ):
-
-  #         if (
-  #             event.keyboard_key
-  #             == sneakysnek.keyboard_keys.KeyboardKey.KEY_RIGHT_SHIFT
-  #         ):
-  #             # RIGHT SHIFT pressed -> player spits
-  #             self.spit(deck)
-
-  #         if (
-  #             event.keyboard_key
-  #             == sneakysnek.keyboard_keys.KeyboardKey.KEY_LEFT_SHIFT
-  #         ):
-  #             # LEFT SHIFT pressed -> player slaps
-  #             self.slap(deck)
-
-  #         print_deck(deck)
 
 
 class Computer(Player):
@@ -265,7 +243,8 @@ class Computer(Player):
     # self.id = "CPU" + str(id)
     self.hand = Hand()
     self.seed = random.seed()
-    self.errorSlapRate = 0 # random.uniform(0, 1) # TODO: not uniform
+    # 1 is no error, 0 is never slap
+    self.errorSlapRate = 0.5  # random.uniform(0, 1) # TODO: not uniform
 
   def spit(self, deck):
     """Inherit spit with a random delay
@@ -292,6 +271,6 @@ class Computer(Player):
 
     if random.random() < self.errorSlapRate:
       slapTime = random.uniform(
-          0.2, 3)  # probably convert to property for different diffculty levels
+          0.5, 1)  # probably convert to property for different diffculty levels
       time.sleep(slapTime)
       super().slap(deck)  # lmao a super slap
